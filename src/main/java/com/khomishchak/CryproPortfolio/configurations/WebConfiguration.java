@@ -7,7 +7,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
+import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WebConfiguration {
 
@@ -15,6 +15,12 @@ public class WebConfiguration {
 
     public WebConfiguration(UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
+    }
+
+    @Bean
+    WebClient idScanApiWebClient(WebClient.Builder webClientBuilder) {
+        return webClientBuilder
+                .build();
     }
 
     @Bean
