@@ -1,7 +1,10 @@
 package com.khomishchak.CryproPortfolio.configurations;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -15,12 +18,6 @@ public class WebConfiguration {
 
     public WebConfiguration(UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
-    }
-
-    @Bean
-    WebClient idScanApiWebClient(WebClient.Builder webClientBuilder) {
-        return webClientBuilder
-                .build();
     }
 
     @Bean

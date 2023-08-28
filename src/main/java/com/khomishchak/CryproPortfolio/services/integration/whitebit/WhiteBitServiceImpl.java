@@ -12,6 +12,7 @@ import com.khomishchak.CryproPortfolio.repositories.BalanceRepository;
 import com.khomishchak.CryproPortfolio.repositories.UserRepository;
 import com.khomishchak.CryproPortfolio.services.integration.whitebit.model.WhiteBitBalanceResp;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -52,8 +53,8 @@ public class WhiteBitServiceImpl implements WhiteBitService {
     private final int retryMaxAttempts;
     private final Duration retryMinBackoff;
 
-    public WhiteBitServiceImpl(UserRepository userRepository, WebClient webClient, ApiKeySettingRepository apiKeySettingRepository,
-            BalanceRepository balanceRepository,
+    public WhiteBitServiceImpl(UserRepository userRepository, BalanceRepository balanceRepository,
+            @Qualifier("WhiteBitApiWebClient") WebClient webClient, ApiKeySettingRepository apiKeySettingRepository,
             @Value("${crypto.portfolio.integration.exchanger.api.retry.maxAttempts:2}") int retryMaxAttempts,
             @Value("${crypto.portfolio.integration.exchanger.api.retry.minBackoffSeconds:2}") int retryMinBackoffSeconds) {
         this.userRepository     = userRepository;
