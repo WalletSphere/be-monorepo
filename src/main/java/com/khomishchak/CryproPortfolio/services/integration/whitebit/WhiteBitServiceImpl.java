@@ -11,6 +11,7 @@ import com.khomishchak.CryproPortfolio.repositories.ApiKeySettingRepository;
 import com.khomishchak.CryproPortfolio.repositories.BalanceRepository;
 import com.khomishchak.CryproPortfolio.repositories.UserRepository;
 import com.khomishchak.CryproPortfolio.services.integration.whitebit.model.WhiteBitBalanceResp;
+import com.khomishchak.CryproPortfolio.services.markets.MarketService;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,8 @@ import java.util.Base64;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -44,6 +47,10 @@ public class WhiteBitServiceImpl implements WhiteBitService {
 
     public static final String GET_MAIN_BALANCE_URL = "/api/v4/main-account/balance";
     public static final String BASE_URL = "https://whitebit.com";
+
+    private static final String WHITE_BIT_SERVER_ERROR_MESSAGE = "Failed to get response from WhiteBit, server error";
+    private static final String WHITE_BIT_CLIENT_ERROR_MESSAGE = "Failed to get response from WhiteBit, client error";
+
     public static final ExchangerCode code = ExchangerCode.WHITE_BIT;
 
     private final UserRepository userRepository;
@@ -52,17 +59,20 @@ public class WhiteBitServiceImpl implements WhiteBitService {
     private final WebClient webClient;
     private final int retryMaxAttempts;
     private final Duration retryMinBackoff;
+    private final MarketService marketService;
 
     public WhiteBitServiceImpl(UserRepository userRepository, BalanceRepository balanceRepository,
             @Qualifier("WhiteBitApiWebClient") WebClient webClient, ApiKeySettingRepository apiKeySettingRepository,
             @Value("${crypto.portfolio.integration.exchanger.api.retry.maxAttempts:2}") int retryMaxAttempts,
-            @Value("${crypto.portfolio.integration.exchanger.api.retry.minBackoffSeconds:2}") int retryMinBackoffSeconds) {
+            @Value("${crypto.portfolio.integration.exchanger.api.retry.minBackoffSeconds:2}") int retryMinBackoffSeconds,
+            MarketService marketService) {
         this.userRepository     = userRepository;
         this.apiKeySettingRepository = apiKeySettingRepository;
         this.balanceRepository  = balanceRepository;
         this.webClient          = webClient;
         this.retryMaxAttempts   = retryMaxAttempts;
         this.retryMinBackoff    = Duration.ofSeconds(retryMinBackoffSeconds);
+        this.marketService      = marketService;
     }
 
     @Override
@@ -107,7 +117,7 @@ public class WhiteBitServiceImpl implements WhiteBitService {
                         return resp.bodyToMono(String.class)
                                 .flatMap(errorMessage -> {
                                     if(statusCode >= 400 && statusCode < 500) {
-                                        return Mono.error(new WhiteBitClientException(errorMessage, statusCode));
+                                        return Mono.error(new WhiteBitClientException(String.format("%s: %s", WHITE_BIT_CLIENT_ERROR_MESSAGE, errorMessage), statusCode));
                                     } else {
                                         return Mono.error(new WhiteBitServerException(errorMessage));
                                     }
@@ -118,16 +128,40 @@ public class WhiteBitServiceImpl implements WhiteBitService {
                 .retryWhen(Retry.backoff(retryMaxAttempts, retryMinBackoff)
                         .filter(e -> e instanceof WebClientResponseException || isTimeoutException(e))
                         .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) ->
-                                new WhiteBitServerException("Failed to get response from WhiteBit")))
+                                new WhiteBitServerException(WHITE_BIT_SERVER_ERROR_MESSAGE)))
                 .block();
+
+        List<Currency> availableCurrencies = mapToCurrencies(response.getCurrencies());
 
         Balance balance = Balance.builder()
                 .code(code)
                 .user(userRepository.getReferenceById(accoId))
-                .currencies(mapToCurrencies(response.getCurrencies()))
+                .totalValue(getTotalPrices(availableCurrencies))
+                .currencies(availableCurrencies)
                 .build();
 
         return balanceRepository.save(balance);
+    }
+
+    private Double getTotalPrices(List<Currency> currencies) {
+
+
+        Map<String, Double> marketValues = marketService.getCurrentMarketValues();
+        Map<String, Currency> currencyMap = currencies.stream()
+                .collect(Collectors.toMap(Currency::getCurrencyCode, Function.identity()));
+
+
+        double totalValue = 0;
+        for (Map.Entry<String, Double> entry : marketValues.entrySet()) {
+            Currency currency = currencyMap.get(entry.getKey());
+            if (currency != null) {
+                double currencyTotalValue = entry.getValue() * currency.getAmount();
+                currency.setTotalValue(currencyTotalValue);
+                totalValue += currencyTotalValue;
+            }
+        }
+
+        return totalValue;
     }
 
     private List<Currency> mapToCurrencies (Map<String, String> resp) {
