@@ -1,4 +1,4 @@
-package com.khomishchak.cryproportfolio.services;
+package com.khomishchak.cryproportfolio.services.exchangers;
 
 import com.khomishchak.cryproportfolio.model.User;
 import com.khomishchak.cryproportfolio.model.enums.ExchangerCode;
@@ -7,7 +7,7 @@ import com.khomishchak.cryproportfolio.model.exchanger.Balance;
 import java.util.List;
 
 
-public interface ExchangersService {
+public interface ExchangerService {
 
     User persistExchangerBalanceForUser(String publicKey, String privateKey, long accoId, ExchangerCode code);
 

@@ -1,4 +1,4 @@
-package com.khomishchak.cryproportfolio.services;
+package com.khomishchak.cryproportfolio.services.exchangers;
 
 import com.khomishchak.cryproportfolio.model.User;
 import com.khomishchak.cryproportfolio.model.enums.ExchangerCode;
@@ -7,8 +7,6 @@ import com.khomishchak.cryproportfolio.model.exchanger.ApiKeysPair;
 import com.khomishchak.cryproportfolio.model.exchanger.Balance;
 import com.khomishchak.cryproportfolio.repositories.ApiKeySettingRepository;
 import com.khomishchak.cryproportfolio.repositories.UserRepository;
-import com.khomishchak.cryproportfolio.services.exchangers.ExchangerConnectorService;
-import com.khomishchak.cryproportfolio.services.exchangers.ExchangerConnectorServiceFactory;
 
 import org.springframework.stereotype.Service;
 
@@ -18,7 +16,7 @@ import java.util.stream.Collectors;
 import jakarta.transaction.Transactional;
 
 @Service
-public class ExchangerServiceImpl implements ExchangersService {
+public class ExchangerServiceImpl implements ExchangerService {
 
     private final UserRepository userRepository;
     private final ApiKeySettingRepository apiKeySettingRepository;
@@ -72,8 +70,6 @@ public class ExchangerServiceImpl implements ExchangersService {
                 .code(code)
                 .apiKeys(apiKeysPair)
                 .build();
-
-        apiKeySettingRepository.save(apiKeySetting);
 
         user.getApiKeysSettings().add(apiKeySetting);
 

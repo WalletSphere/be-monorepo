@@ -4,7 +4,7 @@ import com.khomishchak.cryproportfolio.model.User;
 import com.khomishchak.cryproportfolio.model.enums.ExchangerCode;
 import com.khomishchak.cryproportfolio.model.exchanger.Balance;
 import com.khomishchak.cryproportfolio.model.requests.RegisterBalanceReq;
-import com.khomishchak.cryproportfolio.services.ExchangersService;
+import com.khomishchak.cryproportfolio.services.exchangers.ExchangerService;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,25 +19,25 @@ import java.util.List;
 @RequestMapping("/api/v1/exchangers")
 public class ExchangerController {
 
-    private final ExchangersService exchangersService;
+    private final ExchangerService exchangerService;
 
-    public ExchangerController(ExchangersService exchangersService) {
-        this.exchangersService = exchangersService;
+    public ExchangerController(ExchangerService exchangerService) {
+        this.exchangerService = exchangerService;
     }
 
     @PostMapping("/balance/{accountId}/add")
     public User addExchangerForUser(@PathVariable Long accountId, @RequestBody RegisterBalanceReq balanceReq) {
-        return exchangersService.persistExchangerBalanceForUser(balanceReq.publicKey(), balanceReq.secretKey() ,accountId,
+        return exchangerService.persistExchangerBalanceForUser(balanceReq.publicKey(), balanceReq.secretKey() ,accountId,
                 balanceReq.code());
     }
 
     @GetMapping("/balance/{accountId}/get/{exchangerCode}")
     public Balance getAccountBalance(@PathVariable long accountId, @PathVariable String exchangerCode) {
-        return exchangersService.getMainBalance(accountId, ExchangerCode.valueOf(exchangerCode));
+        return exchangerService.getMainBalance(accountId, ExchangerCode.valueOf(exchangerCode));
     }
 
     @GetMapping("/balance/{accountId}/get/all")
     public List<Balance> getAccountBalances(@PathVariable long accountId) {
-        return exchangersService.getAllMainBalances(accountId);
+        return exchangerService.getAllMainBalances(accountId);
     }
 }
