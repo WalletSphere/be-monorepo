@@ -70,7 +70,7 @@ public class JwtServiceImpl implements JwtService {
     private boolean isTokenExpired(String token) {
         boolean tokenIsValid;
         try {
-            tokenIsValid = extractAllClaims(token).getExpirationTime().isBefore(NumericDate.now());
+            tokenIsValid = extractAllClaims(token).getExpirationTime().isAfter(NumericDate.now());
         } catch (MalformedClaimException exception) {
             tokenIsValid = false;
             // logging

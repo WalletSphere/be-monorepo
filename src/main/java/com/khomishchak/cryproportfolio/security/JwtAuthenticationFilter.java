@@ -1,13 +1,15 @@
-package com.khomishchak.cryproportfolio.configurations;
+package com.khomishchak.cryproportfolio.security;
 
 import com.khomishchak.cryproportfolio.services.security.JwtService;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -18,14 +20,13 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-public class JwtFilterConfig extends OncePerRequestFilter {
-
-    private static final String AUTHORIZATION_HEADER = "Authorization";
+@Component
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final UserDetailsService userDetailsService;
     private final JwtService jwtService;
 
-    public JwtFilterConfig(UserDetailsService userDetailsService, JwtService jwtService) {
+    public JwtAuthenticationFilter(UserDetailsService userDetailsService, JwtService jwtService) {
         this.userDetailsService = userDetailsService;
         this.jwtService = jwtService;
     }
@@ -35,9 +36,9 @@ public class JwtFilterConfig extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
-        String jwtTokenHeader = request.getHeader(AUTHORIZATION_HEADER);
+        String jwtTokenHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if (jwtTokenHeader == null || !jwtTokenHeader.startsWith("Bearer")) {
+        if (jwtTokenHeader == null || !jwtTokenHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
