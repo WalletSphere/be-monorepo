@@ -30,6 +30,7 @@ public class ExchangerServiceImpl implements ExchangerService {
     }
 
     @Override
+    @Transactional
     public User persistExchangerBalanceForUser(String apiPublicKey, String apiPrivateKey, long accoId, ExchangerCode code) {
         User user = userRepository.getReferenceById(accoId);
 
@@ -57,7 +58,6 @@ public class ExchangerServiceImpl implements ExchangerService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
     private User generateApiKeysSettingsForUser(User user, String privateKey, String publicApi, ExchangerCode code) {
         ApiKeysPair apiKeysPair = ApiKeysPair.builder()
                 .publicApi(publicApi)
