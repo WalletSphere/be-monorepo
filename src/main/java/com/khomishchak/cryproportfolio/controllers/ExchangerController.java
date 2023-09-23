@@ -32,17 +32,17 @@ public class ExchangerController {
                 balanceReq.code());
     }
 
-    @GetMapping("/balance/{accountId}/get/{exchangerCode}")
+    @GetMapping("/balance/{accountId}/{exchangerCode}")
     public Balance getAccountBalance(@PathVariable long accountId, @PathVariable String exchangerCode) {
         return exchangerService.getMainBalance(accountId, ExchangerCode.valueOf(exchangerCode));
     }
 
-    @GetMapping("/balance/{accountId}/get/all")
+    @GetMapping("/balance/{accountId}/all")
     public List<Balance> getAccountBalances(@PathVariable long accountId) {
         return exchangerService.getAllMainBalances(accountId);
     }
 
-    @GetMapping("/wallet/{accountId}/get/deposit-withdrawal-history/{exchangerCode}")
+    @GetMapping("/wallet/{accountId}/deposit-withdrawal-history/{exchangerCode}")
     public List<DepositWithdrawalTransaction> getAccountWithdrawalDepositWalletHistory(@PathVariable long accountId,
             @PathVariable String exchangerCode) {
         return exchangerService.getWithdrawalDepositWalletHistory(accountId, ExchangerCode.valueOf(exchangerCode));
