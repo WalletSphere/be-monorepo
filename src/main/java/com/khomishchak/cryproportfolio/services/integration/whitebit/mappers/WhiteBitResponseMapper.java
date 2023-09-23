@@ -8,6 +8,7 @@ import com.khomishchak.cryproportfolio.services.integration.whitebit.model.White
 
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -41,7 +42,7 @@ public class WhiteBitResponseMapper {
                             .transactionId(record.getTransactionId())
                             .transactionHash(record.getTransactionHash())
                             .createdAt(new Date(record.getCreatedAt()))
-                            .amount(record.getAmount())
+                            .amount(BigDecimal.valueOf(record.getAmount()))
                             .ticker(record.getTicker())
                             .transactionType(record.getMethod() == 1 ? TransactionType.DEPOSIT : TransactionType.WITHDRAWAL)
                             .build();

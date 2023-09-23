@@ -2,6 +2,7 @@ package com.khomishchak.cryproportfolio.model;
 
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 import lombok.AllArgsConstructor;
@@ -21,7 +22,7 @@ public class Transaction {
     private String transactionId;
     private String transactionHash;
     private String ticker;
-    private double fee;
-    private double amount;
+    private BigDecimal fee;
+    private BigDecimal amount;
     private Date createdAt;
 }
