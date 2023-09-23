@@ -1,7 +1,6 @@
 package com.khomishchak.cryproportfolio.services.integration.whitebit;
 
 import com.khomishchak.cryproportfolio.model.DepositWithdrawalTransaction;
-import com.khomishchak.cryproportfolio.model.Transaction;
 import com.khomishchak.cryproportfolio.model.exchanger.Balance;
 import com.khomishchak.cryproportfolio.services.exchangers.ExchangerConnectorService;
 

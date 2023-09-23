@@ -1,7 +1,6 @@
 package com.khomishchak.cryproportfolio.controllers;
 
 import com.khomishchak.cryproportfolio.model.DepositWithdrawalTransaction;
-import com.khomishchak.cryproportfolio.model.Transaction;
 import com.khomishchak.cryproportfolio.model.User;
 import com.khomishchak.cryproportfolio.model.enums.ExchangerCode;
 import com.khomishchak.cryproportfolio.model.exchanger.Balance;
