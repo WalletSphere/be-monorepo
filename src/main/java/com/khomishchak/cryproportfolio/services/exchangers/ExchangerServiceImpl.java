@@ -1,5 +1,6 @@
 package com.khomishchak.cryproportfolio.services.exchangers;
 
+import com.khomishchak.cryproportfolio.model.DepositWithdrawalTransaction;
 import com.khomishchak.cryproportfolio.model.User;
 import com.khomishchak.cryproportfolio.model.enums.ExchangerCode;
 import com.khomishchak.cryproportfolio.model.exchanger.ApiKeySetting;
@@ -38,10 +39,8 @@ public class ExchangerServiceImpl implements ExchangerService {
     }
 
     @Override
-    public Balance getMainBalance(long userId, ExchangerCode code) {
-        ExchangerConnectorServiceFactory factory = exchangerServiceFactories.stream().filter(f -> f.getExchangerCode().equals(code))
-                .findFirst().orElseThrow(() -> new RuntimeException("no data for the exchanger with code: " + code));
-        ExchangerConnectorService exchangerConnectorService = factory.newInstance();
+    public Balance getMainBalance(long userId, ExchangerCode exchangerCode) {
+        ExchangerConnectorService exchangerConnectorService = getExchangerConnectorService(exchangerCode);
         return exchangerConnectorService.getMainBalance(userId);
     }
 
@@ -56,6 +55,18 @@ public class ExchangerServiceImpl implements ExchangerService {
                 .filter(f -> codes.contains(f.getExchangerCode()))
                 .map(f -> f.newInstance().getMainBalance(userId))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<DepositWithdrawalTransaction> getWithdrawalDepositWalletHistory(long accoId, ExchangerCode exchangerCode) {
+        ExchangerConnectorService exchangerConnectorService = getExchangerConnectorService(exchangerCode);
+        return exchangerConnectorService.getDepositWithdrawalHistory(accoId);
+    }
+
+    private ExchangerConnectorService getExchangerConnectorService(ExchangerCode exchangerCode) {
+        ExchangerConnectorServiceFactory factory = exchangerServiceFactories.stream().filter(f -> f.getExchangerCode().equals(exchangerCode))
+                .findFirst().orElseThrow(() -> new RuntimeException("no data for the exchanger with code: " + exchangerCode));
+        return factory.newInstance();
     }
 
     private User generateApiKeysSettingsForUser(User user, String privateKey, String publicApi, ExchangerCode code) {

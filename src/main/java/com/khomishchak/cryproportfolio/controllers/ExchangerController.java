@@ -1,5 +1,6 @@
 package com.khomishchak.cryproportfolio.controllers;
 
+import com.khomishchak.cryproportfolio.model.DepositWithdrawalTransaction;
 import com.khomishchak.cryproportfolio.model.User;
 import com.khomishchak.cryproportfolio.model.enums.ExchangerCode;
 import com.khomishchak.cryproportfolio.model.exchanger.Balance;
@@ -31,13 +32,19 @@ public class ExchangerController {
                 balanceReq.code());
     }
 
-    @GetMapping("/balance/{accountId}/get/{exchangerCode}")
+    @GetMapping("/balance/{accountId}/{exchangerCode}")
     public Balance getAccountBalance(@PathVariable long accountId, @PathVariable String exchangerCode) {
         return exchangerService.getMainBalance(accountId, ExchangerCode.valueOf(exchangerCode));
     }
 
-    @GetMapping("/balance/{accountId}/get/all")
+    @GetMapping("/balance/{accountId}/all")
     public List<Balance> getAccountBalances(@PathVariable long accountId) {
         return exchangerService.getAllMainBalances(accountId);
+    }
+
+    @GetMapping("/wallet/{accountId}/deposit-withdrawal-history/{exchangerCode}")
+    public List<DepositWithdrawalTransaction> getAccountWithdrawalDepositWalletHistory(@PathVariable long accountId,
+            @PathVariable String exchangerCode) {
+        return exchangerService.getWithdrawalDepositWalletHistory(accountId, ExchangerCode.valueOf(exchangerCode));
     }
 }
