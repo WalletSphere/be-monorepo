@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class WhiteBitResponseMapper {
@@ -41,7 +42,7 @@ public class WhiteBitResponseMapper {
                     DepositWithdrawalTransaction transaction = DepositWithdrawalTransaction.depositWithdrawalTransactionBuilder()
                             .transactionId(record.getTransactionId())
                             .transactionHash(record.getTransactionHash())
-                            .createdAt(new Date(record.getCreatedAt()))
+                            .createdAt(new Date(TimeUnit.SECONDS.toMillis(record.getCreatedAt())))
                             .amount(BigDecimal.valueOf(record.getAmount()))
                             .ticker(record.getTicker())
                             .transactionType(record.getMethod() == 1 ? TransactionType.DEPOSIT : TransactionType.WITHDRAWAL)
