@@ -3,6 +3,7 @@ package com.khomishchak.cryproportfolio.model;
 import com.khomishchak.cryproportfolio.model.enums.UserRole;
 import com.khomishchak.cryproportfolio.model.exchanger.ApiKeySetting;
 import com.khomishchak.cryproportfolio.model.exchanger.Balance;
+import com.khomishchak.cryproportfolio.model.goals.CryptoGoalsTable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,6 +17,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -43,11 +45,14 @@ public class User {
     private LocalDateTime createdTime;
     private LocalDateTime lastLoginTime;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<ApiKeySetting> apiKeysSettings;
-
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
+
+    @OneToOne
+    private CryptoGoalsTable cryptoGoalsTable;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<ApiKeySetting> apiKeysSettings;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Balance> balances;
