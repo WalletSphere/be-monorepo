@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -27,23 +28,23 @@ public class GoalsController {
         this.goalsService = goalsService;
     }
 
-    @PostMapping("/crypto-table/{accountId}/create")
-    public ResponseEntity<CryptoGoalsTable> createCryptoGoalsTable(@PathVariable Long accountId,
+    @PostMapping("/crypto-tables")
+    public ResponseEntity<CryptoGoalsTable> createCryptoGoalsTable(@RequestParam Long accountId,
             @RequestBody CryptoGoalsTable requestTable) {
         return new ResponseEntity<>(goalsService.createCryptoGoalsTable(accountId, requestTable), HttpStatus.CREATED);
     }
 
-    @GetMapping("/crypto-table/{accountId}")
-    public ResponseEntity<CryptoGoalsTable> getCryptoGoalsTable(@PathVariable Long accountId) {
+    @GetMapping("/crypto-tables")
+    public ResponseEntity<CryptoGoalsTable> getCryptoGoalsTable(@RequestParam Long accountId) {
         return new ResponseEntity<>(goalsService.getCryptoGoalsTable(accountId), HttpStatus.OK);
     }
 
-    @PutMapping("/crypto-table/update")
+    @PutMapping("/crypto-tables")
     public ResponseEntity<CryptoGoalsTable> updateCryptoGoalsTable(@RequestBody CryptoGoalsTable cryptoGoalsTable) {
         return new ResponseEntity<>(goalsService.updateCryptoGoalsTable(cryptoGoalsTable), HttpStatus.OK);
     }
 
-    @PutMapping("/crypto-table/{tableId}/records/update")
+    @PutMapping("/crypto-tables/{tableId}/records")
     public ResponseEntity<CryptoGoalsTable> updateCryptoGoalsTableRecord(
             @RequestBody List<CryptoGoalsRecordUpdateReq> recordUpdateReq, @PathVariable Long tableId) {
         return new ResponseEntity<>(goalsService.updateCryptoGoalsTableRecords(recordUpdateReq, tableId), HttpStatus.OK);

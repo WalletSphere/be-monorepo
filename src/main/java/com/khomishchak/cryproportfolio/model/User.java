@@ -48,12 +48,12 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     private CryptoGoalsTable cryptoGoalsTable;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ApiKeySetting> apiKeysSettings;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Balance> balances;
 }
