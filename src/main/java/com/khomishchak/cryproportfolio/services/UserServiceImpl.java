@@ -73,9 +73,8 @@ public class UserServiceImpl implements UserService {
         );
 
         user.setLastLoginTime(LocalDateTime.now());
-        userRepository.save(user);
 
-        return new LoginResult(loginRequest.username());
+        return new LoginResult(loginRequest.username(), generateJwtToken(userRepository.save(user)));
     }
 
     private RegistrationResult getRegistrationResult(User createdUser) {
