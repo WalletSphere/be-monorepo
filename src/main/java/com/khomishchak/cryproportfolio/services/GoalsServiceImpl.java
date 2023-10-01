@@ -32,7 +32,7 @@ public class GoalsServiceImpl implements GoalsService {
         user.setCryptoGoalsTable(tableRequest);
         tableRequest.setUser(user);
 
-        return cryptoGoalsTableRepository.save(tableRequest);
+        return saveCryptoTable(tableRequest);
     }
 
     @Override
@@ -54,12 +54,11 @@ public class GoalsServiceImpl implements GoalsService {
                     rEn.setGoalQuantity(r.getGoalQuantity());
                     rEn.setQuantity(r.getQuantity());
                     rEn.setAverageCost(r.getAverageCost());
-                    setPostQuantityValues(rEn);
                 }
             });
         });
 
-        return cryptoGoalsTableRepository.save(cryptoGoalsTable);
+        return saveCryptoTable(cryptoGoalsTable);
     }
 
     @Override
@@ -77,24 +76,32 @@ public class GoalsServiceImpl implements GoalsService {
                    .add(record.price().multiply(BigDecimal.valueOf(record.amount())))
                    .divide(tableRecord.getQuantity().add(BigDecimal.valueOf(record.amount())),4, RoundingMode.DOWN));
            tableRecord.setQuantity(tableRecord.getQuantity().add(BigDecimal.valueOf(record.amount())));
-
-           setPostQuantityValues(tableRecord);
        });
 
-       return cryptoGoalsTableRepository.save(cryptoGoalsTable);
+       return saveCryptoTable(cryptoGoalsTable);
     }
 
     private CryptoGoalsTableRecord setPostQuantityValues(CryptoGoalsTableRecord entity) {
         BigDecimal goalQuantity = entity.getGoalQuantity();
         BigDecimal quantity = entity.getQuantity();
 
-        entity.setLeftToBuy(goalQuantity.subtract(quantity));
+        BigDecimal leftToBuy = goalQuantity.subtract(quantity);
+
+        entity.setLeftToBuy(leftToBuy.compareTo(BigDecimal.ZERO) >= 0 ? goalQuantity.subtract(quantity) : BigDecimal.ZERO);
         entity.setDonePercentage(quantity
                         .multiply(BigDecimal.valueOf(100))
                         .divide(goalQuantity, 1, RoundingMode.DOWN));
         entity.setFinished(quantity.compareTo(goalQuantity) >= 0);
 
         return entity;
+    }
+
+    CryptoGoalsTable saveCryptoTable(CryptoGoalsTable table) {
+        CryptoGoalsTable createdTable = cryptoGoalsTableRepository.save(table);
+
+        createdTable.getTableRecords().forEach(this::setPostQuantityValues);
+
+        return createdTable;
     }
 
 
