@@ -3,6 +3,7 @@ package com.khomishchak.cryptoportfolio.model;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 import lombok.AllArgsConstructor;
@@ -24,5 +25,5 @@ public class Transaction {
     private String ticker;
     private BigDecimal fee;
     private BigDecimal amount;
-    private Date createdAt;
+    private LocalDateTime createdAt;
 }

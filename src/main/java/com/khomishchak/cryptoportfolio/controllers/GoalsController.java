@@ -2,6 +2,7 @@ package com.khomishchak.cryptoportfolio.controllers;
 
 import com.khomishchak.cryptoportfolio.model.goals.CryptoGoalsRecordUpdateReq;
 import com.khomishchak.cryptoportfolio.model.goals.CryptoGoalsTable;
+import com.khomishchak.cryptoportfolio.model.goals.SelfGoal;
 import com.khomishchak.cryptoportfolio.services.GoalsService;
 
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+
+import jakarta.websocket.server.PathParam;
+import lombok.Getter;
 
 
 @RestController
@@ -48,5 +52,17 @@ public class GoalsController {
     public ResponseEntity<CryptoGoalsTable> updateCryptoGoalsTableRecord(
             @RequestBody List<CryptoGoalsRecordUpdateReq> recordUpdateReq, @PathVariable Long tableId) {
         return new ResponseEntity<>(goalsService.updateCryptoGoalsTableRecords(recordUpdateReq, tableId), HttpStatus.OK);
+    }
+
+    @GetMapping("/self-goals")
+    public ResponseEntity<List<SelfGoal>> getSelfGoals(@RequestParam Long accountId) {
+        return new ResponseEntity<>(goalsService.getSelfGoals(accountId), HttpStatus.OK);
+    }
+
+    @PostMapping("/self-goals")
+    public ResponseEntity<List<SelfGoal>> createSelfGoals(@RequestParam Long accountId,
+            @RequestBody List<SelfGoal> goals) {
+
+        return new ResponseEntity<>(goalsService.createSelfGoals(accountId, goals), HttpStatus.OK);
     }
 }

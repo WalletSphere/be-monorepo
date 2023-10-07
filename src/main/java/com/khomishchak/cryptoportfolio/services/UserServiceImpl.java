@@ -77,6 +77,11 @@ public class UserServiceImpl implements UserService {
         return new LoginResult(loginRequest.username(), generateJwtToken(userRepository.save(user)));
     }
 
+    @Override
+    public User saveUser(User user) {
+        return userRepository.save(user);
+    }
+
     private RegistrationResult getRegistrationResult(User createdUser) {
 
         return new RegistrationResult(createdUser.getUsername(), createdUser.getEmail(),

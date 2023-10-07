@@ -4,6 +4,7 @@ import com.khomishchak.cryptoportfolio.model.enums.UserRole;
 import com.khomishchak.cryptoportfolio.model.exchanger.ApiKeySetting;
 import com.khomishchak.cryptoportfolio.model.exchanger.Balance;
 import com.khomishchak.cryptoportfolio.model.goals.CryptoGoalsTable;
+import com.khomishchak.cryptoportfolio.model.goals.SelfGoal;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -56,4 +57,7 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Balance> balances;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<SelfGoal> selfGoals;
 }
