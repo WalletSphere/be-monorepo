@@ -17,6 +17,7 @@ import com.khomishchak.cryptoportfolio.services.exchangers.ExchangerService;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -108,6 +109,7 @@ public class GoalsServiceImpl implements GoalsService {
     }
 
     @Override
+    @Transactional
     public List<SelfGoal> createSelfGoals(Long accountId, List<SelfGoal> goals) {
         User user = getUserOrThrowException(accountId);
         user.setSelfGoals(goals);
