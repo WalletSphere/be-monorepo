@@ -51,6 +51,7 @@ public class UserServiceImpl implements UserService {
                 .username(registrationRequest.username())
                 .password(passwordEncoder.encode(registrationRequest.password()))
                 .email(registrationRequest.email())
+                .acceptTC(registrationRequest.acceptTC())
                 .createdTime(currentMoment)
                 .lastLoginTime(currentMoment)
                 .userRole(UserRole.NORMAL)
