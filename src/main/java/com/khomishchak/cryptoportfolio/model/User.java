@@ -45,6 +45,8 @@ public class User {
     private LocalDateTime createdTime;
     private LocalDateTime lastLoginTime;
 
+    private boolean acceptTC;
+
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
 
