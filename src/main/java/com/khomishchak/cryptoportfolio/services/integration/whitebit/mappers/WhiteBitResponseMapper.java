@@ -9,11 +9,12 @@ import com.khomishchak.cryptoportfolio.services.integration.whitebit.model.White
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @Component
 public class WhiteBitResponseMapper {
@@ -42,7 +43,7 @@ public class WhiteBitResponseMapper {
                     DepositWithdrawalTransaction transaction = DepositWithdrawalTransaction.depositWithdrawalTransactionBuilder()
                             .transactionId(record.getTransactionId())
                             .transactionHash(record.getTransactionHash())
-                            .createdAt(new Date(TimeUnit.SECONDS.toMillis(record.getCreatedAt())))
+                            .createdAt(LocalDateTime.ofInstant(Instant.ofEpochMilli(record.getCreatedAt() * 1000), ZoneId.systemDefault()))
                             .amount(BigDecimal.valueOf(record.getAmount()))
                             .ticker(record.getTicker())
                             .transactionType(record.getMethod() == 1 ? TransactionType.DEPOSIT : TransactionType.WITHDRAWAL)

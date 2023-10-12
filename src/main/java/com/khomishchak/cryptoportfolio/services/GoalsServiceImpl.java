@@ -2,16 +2,26 @@ package com.khomishchak.cryptoportfolio.services;
 
 import com.khomishchak.cryptoportfolio.exceptions.GoalsTableNotFoundException;
 import com.khomishchak.cryptoportfolio.exceptions.UserNotFoundException;
+import com.khomishchak.cryptoportfolio.model.Transaction;
+import com.khomishchak.cryptoportfolio.model.TransactionType;
 import com.khomishchak.cryptoportfolio.model.User;
+import com.khomishchak.cryptoportfolio.model.enums.ExchangerCode;
 import com.khomishchak.cryptoportfolio.model.goals.CryptoGoalsTableRecord;
 import com.khomishchak.cryptoportfolio.model.goals.CryptoGoalsRecordUpdateReq;
 import com.khomishchak.cryptoportfolio.model.goals.CryptoGoalsTable;
+import com.khomishchak.cryptoportfolio.model.goals.GoalType;
+import com.khomishchak.cryptoportfolio.model.goals.SelfGoal;
 import com.khomishchak.cryptoportfolio.repositories.CryptoGoalsTableRepository;
+import com.khomishchak.cryptoportfolio.repositories.SelfGoalRepository;
+import com.khomishchak.cryptoportfolio.services.exchangers.ExchangerService;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -19,10 +29,15 @@ public class GoalsServiceImpl implements GoalsService {
 
     private final CryptoGoalsTableRepository cryptoGoalsTableRepository;
     private final UserService userService;
+    private final SelfGoalRepository selfGoalRepository;
+    private final ExchangerService exchangerService;
 
-    public GoalsServiceImpl(CryptoGoalsTableRepository cryptoGoalsTableRepository, UserService userService) {
+    public GoalsServiceImpl(CryptoGoalsTableRepository cryptoGoalsTableRepository, UserService userService,
+            SelfGoalRepository selfGoalRepository, ExchangerService exchangerService) {
         this.cryptoGoalsTableRepository = cryptoGoalsTableRepository;
         this.userService = userService;
+        this.selfGoalRepository = selfGoalRepository;
+        this.exchangerService = exchangerService;
     }
 
     @Override
@@ -79,6 +94,59 @@ public class GoalsServiceImpl implements GoalsService {
        });
 
        return saveCryptoTable(cryptoGoalsTable);
+    }
+
+    @Override
+    public List<SelfGoal> getSelfGoals(Long accountId) {
+
+        List<SelfGoal> result = selfGoalRepository.findAllByUserId(accountId);
+
+        result.forEach(goal -> {
+            goal.setCurrentAmount(getDepositValueForPeriod(accountId, goal.getTicker(), goal.getStartDate(), goal.getEndDate()));
+            goal.setAchieved(goal.getCurrentAmount() > goal.getGoalAmount());
+    });
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public List<SelfGoal> createSelfGoals(Long accountId, List<SelfGoal> goals) {
+        User user = getUserOrThrowException(accountId);
+        user.setSelfGoals(goals);
+
+        goals.forEach(g -> {
+            g.setUser(user);
+            g.setStartDate(LocalDateTime.now());
+            g.setEndDate(LocalDateTime.now().plusMinutes(1));//g.getGoalType().getEndTime());
+            g.setAchieved(g.getCurrentAmount() > g.getGoalAmount());
+            g.setCurrentAmount(getDepositValueForPeriod(accountId, g.getTicker(), g.getStartDate(), g.getEndDate()));
+        });
+
+        userService.saveUser(user);
+
+        return goals;
+    }
+
+    // TODO: should be replaced with strategy pattern to handle multiple goal types, not only deposit
+    @Override
+    public boolean overdueGoalIsAchieved(SelfGoal goal) {
+        GoalType goalType = goal.getGoalType();
+        double depositValue = getDepositValueForPeriod(goal.getUser().getId(), goal.getTicker(),
+                goalType.getStartTime(2), goalType.getStartTime(1));
+
+        goal.setCurrentAmount(depositValue);
+        goal.setAchieved(depositValue > goal.getGoalAmount());
+        return selfGoalRepository.save(goal).isAchieved();
+    }
+
+    private double getDepositValueForPeriod(long accountId, String ticker, LocalDateTime startingData, LocalDateTime endingDate) {
+        return exchangerService.getWithdrawalDepositWalletHistory(accountId, ExchangerCode.WHITE_BIT)
+                .stream()
+                .filter(transaction -> transaction.getTicker().equalsIgnoreCase(ticker) &&
+                        transaction.getTransactionType().equals(TransactionType.WITHDRAWAL) &&
+                        transaction.getCreatedAt().isAfter(startingData) && transaction.getCreatedAt().isBefore(endingDate))
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add).doubleValue();
     }
 
     private CryptoGoalsTableRecord setPostQuantityValues(CryptoGoalsTableRecord entity) {

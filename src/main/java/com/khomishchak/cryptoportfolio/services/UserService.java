@@ -15,4 +15,6 @@ public interface UserService {
     RegistrationResult registerUser(RegistrationRequest registrationRequest);
 
     LoginResult authenticateUser(LoginRequest loginRequest);
+
+    User saveUser(User user);
 }
