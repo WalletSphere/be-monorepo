@@ -83,8 +83,8 @@ public class WhiteBitServiceImpl implements WhiteBitService {
     }
 
     @Override
-    public Balance getAccountBalance(long accoId) {
-        ApiKeysPair keysPair = getApiKeysPair(accoId);
+    public Balance getAccountBalance(long userId) {
+        ApiKeysPair keysPair = getApiKeysPair(userId);
         String apiKey = keysPair.getPublicApi();
         validateApiKey(apiKey);
 
@@ -98,7 +98,7 @@ public class WhiteBitServiceImpl implements WhiteBitService {
 
         Balance balance = Balance.builder()
                 .code(CODE)
-                .user(userRepository.getReferenceById(accoId))
+                .user(userRepository.getReferenceById(userId))
                 .totalValue(getTotalPrices(availableCurrencies))
                 .currencies(availableCurrencies)
                 .build();
@@ -107,8 +107,8 @@ public class WhiteBitServiceImpl implements WhiteBitService {
     }
 
     @Override
-    public List<DepositWithdrawalTransaction> getDepositWithdrawalHistory(long accoId) {
-        ApiKeysPair keysPair = getApiKeysPair(accoId);
+    public List<DepositWithdrawalTransaction> getDepositWithdrawalHistory(long userId) {
+        ApiKeysPair keysPair = getApiKeysPair(userId);
         String apiKey = keysPair.getPublicApi();
         validateApiKey(apiKey);
 
@@ -168,8 +168,8 @@ public class WhiteBitServiceImpl implements WhiteBitService {
                 });
     }
 
-    private ApiKeysPair getApiKeysPair(long accoId) {
-        List<ApiKeySetting> apiKeys = apiKeySettingRepository.findAllByUserId(accoId);
+    private ApiKeysPair getApiKeysPair(long userId) {
+        List<ApiKeySetting> apiKeys = apiKeySettingRepository.findAllByUserId(userId);
 
         return apiKeys.stream()
                 .filter(keys -> CODE.equals(keys.getCode()))

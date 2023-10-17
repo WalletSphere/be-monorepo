@@ -10,11 +10,11 @@ import java.util.List;
 
 public interface ExchangerService {
 
-    User persistExchangerBalanceForUser(String publicKey, String privateKey, long accoId, ExchangerCode code);
+    User persistExchangerBalanceForUser(String publicKey, String privateKey, long userId, ExchangerCode code);
 
     Balance getMainBalance(long userId, ExchangerCode code);
 
     List<Balance> getAllMainBalances(long userId);
 
-    List<DepositWithdrawalTransaction> getWithdrawalDepositWalletHistory(long accoId, ExchangerCode exchangerCode);
+    List<DepositWithdrawalTransaction> getWithdrawalDepositWalletHistory(long userId, ExchangerCode exchangerCode);
 }

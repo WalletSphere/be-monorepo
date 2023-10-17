@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface WhiteBitService {
 
-    Balance getAccountBalance(long accoId);
+    Balance getAccountBalance(long userId);
 
-    List<DepositWithdrawalTransaction> getDepositWithdrawalHistory(long accoId);
+    List<DepositWithdrawalTransaction> getDepositWithdrawalHistory(long userId);
 }

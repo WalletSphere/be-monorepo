@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface ExchangerConnectorService {
 
-    Balance getMainBalance(long accoId);
+    Balance getMainBalance(long userId);
 
-    List<DepositWithdrawalTransaction> getDepositWithdrawalHistory(long accoId);
+    List<DepositWithdrawalTransaction> getDepositWithdrawalHistory(long userId);
 }

@@ -50,8 +50,8 @@ public class GoalsServiceImpl implements GoalsService {
     }
 
     @Override
-    public CryptoGoalsTable getCryptoGoalsTable(Long accountId) {
-        CryptoGoalsTable table  = userService.getUserById(accountId).getCryptoGoalsTable();
+    public CryptoGoalsTable getCryptoGoalsTable(Long userId) {
+        CryptoGoalsTable table  = userService.getUserById(userId).getCryptoGoalsTable();
 
         table.getTableRecords().forEach(this::setPostQuantityValues);
 
@@ -96,12 +96,12 @@ public class GoalsServiceImpl implements GoalsService {
     }
 
     @Override
-    public List<SelfGoal> getSelfGoals(Long accountId) {
+    public List<SelfGoal> getSelfGoals(Long userId) {
 
-        List<SelfGoal> result = selfGoalRepository.findAllByUserId(accountId);
+        List<SelfGoal> result = selfGoalRepository.findAllByUserId(userId);
 
         result.forEach(goal -> {
-            goal.setCurrentAmount(getDepositValueForPeriod(accountId, goal.getTicker(), goal.getStartDate(), goal.getEndDate()));
+            goal.setCurrentAmount(getDepositValueForPeriod(userId, goal.getTicker(), goal.getStartDate(), goal.getEndDate()));
             goal.setAchieved(goal.getCurrentAmount() > goal.getGoalAmount());
     });
         return result;
@@ -109,8 +109,8 @@ public class GoalsServiceImpl implements GoalsService {
 
     @Override
     @Transactional
-    public List<SelfGoal> createSelfGoals(Long accountId, List<SelfGoal> goals) {
-        User user = userService.getUserById(accountId);
+    public List<SelfGoal> createSelfGoals(Long userId, List<SelfGoal> goals) {
+        User user = userService.getUserById(userId);
         user.setSelfGoals(goals);
 
         goals.forEach(g -> {
@@ -118,7 +118,7 @@ public class GoalsServiceImpl implements GoalsService {
             g.setStartDate(LocalDateTime.now());
             g.setEndDate(LocalDateTime.now().plusMinutes(1));//g.getGoalType().getEndTime());
             g.setAchieved(g.getCurrentAmount() > g.getGoalAmount());
-            g.setCurrentAmount(getDepositValueForPeriod(accountId, g.getTicker(), g.getStartDate(), g.getEndDate()));
+            g.setCurrentAmount(getDepositValueForPeriod(userId, g.getTicker(), g.getStartDate(), g.getEndDate()));
         });
 
         userService.saveUser(user);
@@ -138,8 +138,8 @@ public class GoalsServiceImpl implements GoalsService {
         return selfGoalRepository.save(goal).isAchieved();
     }
 
-    private double getDepositValueForPeriod(long accountId, String ticker, LocalDateTime startingData, LocalDateTime endingDate) {
-        return exchangerService.getWithdrawalDepositWalletHistory(accountId, ExchangerCode.WHITE_BIT)
+    private double getDepositValueForPeriod(long userId, String ticker, LocalDateTime startingData, LocalDateTime endingDate) {
+        return exchangerService.getWithdrawalDepositWalletHistory(userId, ExchangerCode.WHITE_BIT)
                 .stream()
                 .filter(transaction -> transaction.getTicker().equalsIgnoreCase(ticker) &&
                         transaction.getTransactionType().equals(TransactionType.WITHDRAWAL) &&

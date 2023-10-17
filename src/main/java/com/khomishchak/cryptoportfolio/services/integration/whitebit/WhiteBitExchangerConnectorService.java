@@ -18,12 +18,12 @@ public class WhiteBitExchangerConnectorService implements ExchangerConnectorServ
     }
 
     @Override
-    public Balance getMainBalance(long accoId) {
-        return whiteBitService.getAccountBalance(accoId);
+    public Balance getMainBalance(long userId) {
+        return whiteBitService.getAccountBalance(userId);
     }
 
     @Override
-    public List<DepositWithdrawalTransaction> getDepositWithdrawalHistory(long accoId) {
-        return whiteBitService.getDepositWithdrawalHistory(accoId);
+    public List<DepositWithdrawalTransaction> getDepositWithdrawalHistory(long userId) {
+        return whiteBitService.getDepositWithdrawalHistory(userId);
     }
 }

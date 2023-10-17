@@ -8,17 +8,17 @@ import java.util.List;
 
 public interface GoalsService {
 
-    CryptoGoalsTable createCryptoGoalsTable(Long accountId, CryptoGoalsTable tableRequest);
+    CryptoGoalsTable createCryptoGoalsTable(Long userId, CryptoGoalsTable tableRequest);
 
-    CryptoGoalsTable getCryptoGoalsTable(Long accountId);
+    CryptoGoalsTable getCryptoGoalsTable(Long userId);
 
     CryptoGoalsTable updateCryptoGoalsTable(CryptoGoalsTable cryptoGoalsTable);
 
     CryptoGoalsTable updateCryptoGoalsTableRecords(List<CryptoGoalsRecordUpdateReq> recordUpdateReq, long tableId);
 
-    List<SelfGoal> getSelfGoals(Long accountId);
+    List<SelfGoal> getSelfGoals(Long userId);
 
-    List<SelfGoal> createSelfGoals(Long accountId, List<SelfGoal> goals);
+    List<SelfGoal> createSelfGoals(Long userId, List<SelfGoal> goals);
 
     boolean overdueGoalIsAchieved(SelfGoal goal);
 }

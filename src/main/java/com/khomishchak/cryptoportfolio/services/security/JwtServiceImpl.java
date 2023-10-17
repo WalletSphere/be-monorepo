@@ -1,5 +1,7 @@
 package com.khomishchak.cryptoportfolio.services.security;
 
+import com.khomishchak.cryptoportfolio.security.UserDetailsImpl;
+
 import org.jose4j.jwk.EcJwkGenerator;
 import org.jose4j.jwk.EllipticCurveJsonWebKey;
 import org.jose4j.jws.AlgorithmIdentifiers;
@@ -13,18 +15,22 @@ import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.jwt.consumer.JwtContext;
 import org.jose4j.keys.EllipticCurves;
 import org.jose4j.lang.JoseException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Map;
+import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class JwtServiceImpl implements JwtService {
 
     private static final Long EXPIRATION_TIME_IN_MINUTES = 30L;
+    private static final String TOKEN_PREFIX = "Bearer ";
     private static final String ALG_HEADER = AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256;
 
     private Key privateKey;
@@ -44,8 +50,15 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public String generateToken(Map<String, String> extraClaims, UserDetails userDetails) {
+        if(!(userDetails instanceof UserDetailsImpl)) {
+            throw new IllegalArgumentException("Expected type was UserDetailsImpl");
+        }
+
+        UserDetailsImpl userDetailsimpl = (UserDetailsImpl) userDetails;
+
         JwtClaims jwtClaims = new JwtClaims();
         jwtClaims.setSubject(userDetails.getUsername());
+        jwtClaims.setClaim("userId", userDetailsimpl.getUserId());
         jwtClaims.setIssuedAtToNow();
         jwtClaims.setExpirationTimeMinutesInTheFuture(EXPIRATION_TIME_IN_MINUTES);
 
@@ -84,12 +97,28 @@ public class JwtServiceImpl implements JwtService {
 
         try {
             username = extractAllClaims(token).getSubject();
-        } catch (MalformedClaimException exception) {
+        } catch (MalformedClaimException | RuntimeException exception) {
             username = null;
             // logging
         }
 
         return username;
+    }
+
+    @Override
+    public Long extractUserId(String token) {
+        return (Long) extractAllClaims(token).getClaimValue("userId");
+    }
+
+    @Override
+    public Optional<String> getToken(HttpServletRequest request) {
+        String jwtTokenHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+        if (jwtTokenHeader == null || !jwtTokenHeader.startsWith(TOKEN_PREFIX)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(jwtTokenHeader.substring(TOKEN_PREFIX.length()));
     }
 
     private JwtClaims extractAllClaims(String token) {

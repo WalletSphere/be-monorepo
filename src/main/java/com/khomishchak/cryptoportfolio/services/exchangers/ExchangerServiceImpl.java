@@ -32,8 +32,8 @@ public class ExchangerServiceImpl implements ExchangerService {
 
     @Override
     @Transactional
-    public User persistExchangerBalanceForUser(String apiPublicKey, String apiPrivateKey, long accoId, ExchangerCode code) {
-        User user = userRepository.getReferenceById(accoId);
+    public User persistExchangerBalanceForUser(String apiPublicKey, String apiPrivateKey, long userId, ExchangerCode code) {
+        User user = userRepository.getReferenceById(userId);
 
         return generateApiKeysSettingsForUser(user, apiPrivateKey, apiPublicKey, code);
     }
@@ -58,9 +58,9 @@ public class ExchangerServiceImpl implements ExchangerService {
     }
 
     @Override
-    public List<DepositWithdrawalTransaction> getWithdrawalDepositWalletHistory(long accoId, ExchangerCode exchangerCode) {
+    public List<DepositWithdrawalTransaction> getWithdrawalDepositWalletHistory(long userId, ExchangerCode exchangerCode) {
         ExchangerConnectorService exchangerConnectorService = getExchangerConnectorService(exchangerCode);
-        return exchangerConnectorService.getDepositWithdrawalHistory(accoId);
+        return exchangerConnectorService.getDepositWithdrawalHistory(userId);
     }
 
     private ExchangerConnectorService getExchangerConnectorService(ExchangerCode exchangerCode) {
