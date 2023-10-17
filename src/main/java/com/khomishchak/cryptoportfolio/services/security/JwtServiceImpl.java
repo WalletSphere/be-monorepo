@@ -1,5 +1,6 @@
 package com.khomishchak.cryptoportfolio.services.security;
 
+import com.khomishchak.cryptoportfolio.model.enums.DeviceType;
 import com.khomishchak.cryptoportfolio.security.UserDetailsImpl;
 
 import org.jose4j.jwk.EcJwkGenerator;
@@ -15,6 +16,7 @@ import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.jwt.consumer.JwtContext;
 import org.jose4j.keys.EllipticCurves;
 import org.jose4j.lang.JoseException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -29,12 +31,24 @@ import jakarta.servlet.http.HttpServletRequest;
 @Service
 public class JwtServiceImpl implements JwtService {
 
-    private static final Long EXPIRATION_TIME_IN_MINUTES = 30L;
+    private Long jwtWebExpirationTimeInMinutes;
+    private Long jwtAppExpirationTimeInMinutes;
+
     private static final String TOKEN_PREFIX = "Bearer ";
     private static final String ALG_HEADER = AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256;
 
     private Key privateKey;
     private Key publicKey;
+
+    @Value("${ws.security.jwt.expiration-time.web.minutes:30}")
+    public void setJwtWebExpirationTimeInMinutes(Long jwtWebExpirationTimeInMinutes) {
+        this.jwtWebExpirationTimeInMinutes = jwtWebExpirationTimeInMinutes;
+    }
+
+    @Value("${ws.security.jwt.expiration-time.app.minutes:4320}")
+    public void setJwtAppExpirationTimeInMinutes(Long jwtAppExpirationTimeInMinutes) {
+        this.jwtAppExpirationTimeInMinutes = jwtAppExpirationTimeInMinutes;
+    }
 
     @PostConstruct
     public void initKeys() {
@@ -49,10 +63,12 @@ public class JwtServiceImpl implements JwtService {
     }
 
     @Override
-    public String generateToken(Map<String, String> extraClaims, UserDetails userDetails) {
+    public String generateToken(Map<String, String> extraClaims, UserDetails userDetails, DeviceType deviceType) {
         if(!(userDetails instanceof UserDetailsImpl)) {
             throw new IllegalArgumentException("Expected type was UserDetailsImpl");
         }
+
+        Long expiryTime = deviceType.equals(DeviceType.WEB) ? jwtWebExpirationTimeInMinutes : jwtAppExpirationTimeInMinutes;
 
         UserDetailsImpl userDetailsimpl = (UserDetailsImpl) userDetails;
 
@@ -60,7 +76,7 @@ public class JwtServiceImpl implements JwtService {
         jwtClaims.setSubject(userDetails.getUsername());
         jwtClaims.setClaim("userId", userDetailsimpl.getUserId());
         jwtClaims.setIssuedAtToNow();
-        jwtClaims.setExpirationTimeMinutesInTheFuture(EXPIRATION_TIME_IN_MINUTES);
+        jwtClaims.setExpirationTimeMinutesInTheFuture(expiryTime);
 
         JsonWebSignature jws = new JsonWebSignature();
         jws.setAlgorithmHeaderValue(ALG_HEADER);

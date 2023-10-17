@@ -2,6 +2,7 @@ package com.khomishchak.cryptoportfolio.services;
 
 import com.khomishchak.cryptoportfolio.exceptions.UserNotFoundException;
 import com.khomishchak.cryptoportfolio.model.User;
+import com.khomishchak.cryptoportfolio.model.enums.DeviceType;
 import com.khomishchak.cryptoportfolio.model.enums.UserRole;
 import com.khomishchak.cryptoportfolio.model.requests.LoginRequest;
 import com.khomishchak.cryptoportfolio.model.requests.RegistrationRequest;
@@ -18,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -57,7 +57,7 @@ public class UserServiceImpl implements UserService {
                 .userRole(UserRole.NORMAL)
                 .build();
 
-        return getRegistrationResult(userRepository.save(newUser));
+        return getRegistrationResult(userRepository.save(newUser), registrationRequest.deviceType());
     }
 
     @Override
@@ -75,7 +75,7 @@ public class UserServiceImpl implements UserService {
 
         user.setLastLoginTime(LocalDateTime.now());
 
-        return new LoginResult(loginRequest.username(), generateJwtToken(userRepository.save(user)));
+        return new LoginResult(loginRequest.username(), generateJwtToken(userRepository.save(user), loginRequest.deviceType()));
     }
 
     @Override
@@ -88,13 +88,13 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new UserNotFoundException(String.format("User with id: %s was not found", userId)));
     }
 
-    private RegistrationResult getRegistrationResult(User createdUser) {
+    private RegistrationResult getRegistrationResult(User createdUser, DeviceType registrationDeviceType) {
 
         return new RegistrationResult(createdUser.getUsername(), createdUser.getEmail(),
-                createdUser.getUserRole(), generateJwtToken(createdUser));
+                createdUser.getUserRole(), generateJwtToken(createdUser, registrationDeviceType));
     }
 
-    private String generateJwtToken(User user) {
-        return jwtService.generateToken(Collections.EMPTY_MAP, new UserDetailsImpl(user));
+    private String generateJwtToken(User user, DeviceType deviceType) {
+        return jwtService.generateToken(Collections.EMPTY_MAP, new UserDetailsImpl(user), deviceType);
     }
 }
