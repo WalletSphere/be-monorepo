@@ -1,4 +1,4 @@
-package com.khomishchak.cryptoportfolio.model.goals;
+package com.khomishchak.cryptoportfolio.model.enums;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

@@ -37,8 +37,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<User> getUserById(Long userId) {
-        return userRepository.findById(userId);
+    public User getUserById(Long userId) {
+        return getUserOrThrowException(userId);
     }
 
 
@@ -81,6 +81,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public User saveUser(User user) {
         return userRepository.save(user);
+    }
+
+    private User getUserOrThrowException(long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(String.format("User with id: %s was not found", userId)));
     }
 
     private RegistrationResult getRegistrationResult(User createdUser) {

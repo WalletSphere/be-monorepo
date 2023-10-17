@@ -1,11 +1,10 @@
-package com.khomishchak.cryptoportfolio.model.goals;
+package com.khomishchak.cryptoportfolio.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.khomishchak.cryptoportfolio.model.User;
-import com.khomishchak.cryptoportfolio.model.enums.GoalType;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.khomishchak.cryptoportfolio.model.enums.FeedbackType;
 
-import java.time.LocalDateTime;
-
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -16,7 +15,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -31,34 +29,31 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "self_goals")
+@Table(name = "feedbacks")
 @ToString(exclude = "user")
 @EqualsAndHashCode(exclude = "user")
-public class SelfGoal {
+public class Feedback {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String ticker;
+    @Enumerated(value = EnumType.STRING)
+    private FeedbackType feedbackType;
 
-    @Enumerated(EnumType.STRING)
-    private GoalType goalType;
+    private String message;
 
-    private double goalAmount;
-
-    @Transient
-    private double currentAmount;
-
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
-
-    private boolean isAchieved = false;
-    // closed means that we won't have any running logic on this entity, we will be only getting the info about closed goals
-    private boolean isClosed = false;
-
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "user_id")
-    @JsonIgnore
     private User user;
+
+    @JsonIgnore
+    public User getUser() {
+        return user;
+    }
+
+    @JsonProperty("user_id")
+    public Long getUserId() {
+        return user.getId();
+    }
 }

@@ -1,6 +1,6 @@
 package com.khomishchak.cryptoportfolio.services.scheduled;
 
-import com.khomishchak.cryptoportfolio.model.goals.GoalType;
+import com.khomishchak.cryptoportfolio.model.enums.GoalType;
 import com.khomishchak.cryptoportfolio.model.goals.SelfGoal;
 import com.khomishchak.cryptoportfolio.repositories.SelfGoalRepository;
 import com.khomishchak.cryptoportfolio.services.GoalsService;

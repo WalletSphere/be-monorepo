@@ -26,6 +26,7 @@ public class ExchangerController {
         this.exchangerService = exchangerService;
     }
 
+    // TODO: update return type to dto
     @PostMapping("/balance/{accountId}/add")
     public User addExchangerForUser(@PathVariable Long accountId, @RequestBody RegisterBalanceReq balanceReq) {
         return exchangerService.persistExchangerBalanceForUser(balanceReq.publicKey(), balanceReq.secretKey() ,accountId,

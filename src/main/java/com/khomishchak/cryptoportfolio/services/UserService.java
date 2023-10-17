@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface UserService {
 
-    Optional<User> getUserById(Long userId);
+    User getUserById(Long userId);
 
     RegistrationResult registerUser(RegistrationRequest registrationRequest);
 
