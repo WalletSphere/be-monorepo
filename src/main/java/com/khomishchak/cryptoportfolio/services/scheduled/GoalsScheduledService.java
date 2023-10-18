@@ -22,7 +22,7 @@ public class GoalsScheduledService implements ScheduledService {
     }
 
     @Override
-    @Scheduled(cron = "0 43 12 * * ?") // every day at 00:00
+    @Scheduled(cron = "0 0 0 * * ?")
     public void doAtTheStartOfTheDay() {
         List<SelfGoal> overdueGoals = goalRepository.getAllOverdueGoals();
 

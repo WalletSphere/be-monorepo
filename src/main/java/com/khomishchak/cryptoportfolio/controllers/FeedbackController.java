@@ -1,6 +1,7 @@
 package com.khomishchak.cryptoportfolio.controllers;
 
 import com.khomishchak.cryptoportfolio.model.Feedback;
+import com.khomishchak.cryptoportfolio.model.response.CreateFeedbackResp;
 import com.khomishchak.cryptoportfolio.model.requests.FeedbackRequest;
 import com.khomishchak.cryptoportfolio.services.FeedbackService;
 
@@ -25,7 +26,7 @@ public class FeedbackController {
     }
 
     @PostMapping
-    public ResponseEntity<Feedback> createFeedback(@RequestBody FeedbackRequest feedbackRequest) {
+    public ResponseEntity<CreateFeedbackResp> createFeedback(@RequestBody FeedbackRequest feedbackRequest) {
         return new ResponseEntity<>(feedbackService.saveFeedback(feedbackRequest), HttpStatus.CREATED);
     }
 
