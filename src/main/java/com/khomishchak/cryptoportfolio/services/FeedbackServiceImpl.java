@@ -2,6 +2,8 @@ package com.khomishchak.cryptoportfolio.services;
 
 import com.khomishchak.cryptoportfolio.model.Feedback;
 import com.khomishchak.cryptoportfolio.model.User;
+import com.khomishchak.cryptoportfolio.model.enums.RegistrationStatus;
+import com.khomishchak.cryptoportfolio.model.response.CreateFeedbackResp;
 import com.khomishchak.cryptoportfolio.model.requests.FeedbackRequest;
 import com.khomishchak.cryptoportfolio.repositories.FeedbackRepository;
 
@@ -21,7 +23,7 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
-    public Feedback saveFeedback(FeedbackRequest feedbackRequest) {
+    public CreateFeedbackResp saveFeedback(FeedbackRequest feedbackRequest) {
         User user = userService.getUserById(feedbackRequest.userId());
 
         Feedback newFeedback = Feedback.builder()
@@ -32,7 +34,7 @@ public class FeedbackServiceImpl implements FeedbackService {
 
         user.getFeedbacks().add(newFeedback);
 
-        return feedbackRepository.save(newFeedback);
+        return new CreateFeedbackResp(user.getId(), feedbackRepository.save(newFeedback).getId(), RegistrationStatus.SUCCESSFUL);
     }
 
     @Override

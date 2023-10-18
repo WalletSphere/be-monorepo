@@ -3,9 +3,11 @@ package com.khomishchak.cryptoportfolio.services.exchangers;
 import com.khomishchak.cryptoportfolio.model.DepositWithdrawalTransaction;
 import com.khomishchak.cryptoportfolio.model.User;
 import com.khomishchak.cryptoportfolio.model.enums.ExchangerCode;
+import com.khomishchak.cryptoportfolio.model.enums.RegistrationStatus;
 import com.khomishchak.cryptoportfolio.model.exchanger.ApiKeySetting;
 import com.khomishchak.cryptoportfolio.model.exchanger.ApiKeysPair;
 import com.khomishchak.cryptoportfolio.model.exchanger.Balance;
+import com.khomishchak.cryptoportfolio.model.response.RegisterApiKeysResp;
 import com.khomishchak.cryptoportfolio.repositories.ApiKeySettingRepository;
 import com.khomishchak.cryptoportfolio.repositories.UserRepository;
 
@@ -32,7 +34,7 @@ public class ExchangerServiceImpl implements ExchangerService {
 
     @Override
     @Transactional
-    public User persistExchangerBalanceForUser(String apiPublicKey, String apiPrivateKey, long userId, ExchangerCode code) {
+    public RegisterApiKeysResp persistExchangerApiKeysForUser(String apiPublicKey, String apiPrivateKey, long userId, ExchangerCode code) {
         User user = userRepository.getReferenceById(userId);
 
         return generateApiKeysSettingsForUser(user, apiPrivateKey, apiPublicKey, code);
@@ -69,7 +71,7 @@ public class ExchangerServiceImpl implements ExchangerService {
         return factory.newInstance();
     }
 
-    private User generateApiKeysSettingsForUser(User user, String privateKey, String publicApi, ExchangerCode code) {
+    private RegisterApiKeysResp generateApiKeysSettingsForUser(User user, String privateKey, String publicApi, ExchangerCode code) {
         ApiKeysPair apiKeysPair = ApiKeysPair.builder()
                 .publicApi(publicApi)
                 .privateKey(privateKey)
@@ -84,6 +86,8 @@ public class ExchangerServiceImpl implements ExchangerService {
 
         user.getApiKeysSettings().add(apiKeySetting);
 
-        return userRepository.save(user);
+        apiKeySettingRepository.save(apiKeySetting);
+
+        return new RegisterApiKeysResp(user.getId(), apiKeySettingRepository.save(apiKeySetting).getId(), RegistrationStatus.SUCCESSFUL);
     }
 }
