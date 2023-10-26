@@ -1,11 +1,12 @@
 package com.khomishchak.cryptoportfolio.services;
 
 import com.khomishchak.cryptoportfolio.exceptions.GoalsTableNotFoundException;
-import com.khomishchak.cryptoportfolio.exceptions.UserNotFoundException;
+import com.khomishchak.cryptoportfolio.exceptions.GoalsTableRecordNotFoundException;
 import com.khomishchak.cryptoportfolio.model.Transaction;
 import com.khomishchak.cryptoportfolio.model.TransactionType;
 import com.khomishchak.cryptoportfolio.model.User;
 import com.khomishchak.cryptoportfolio.model.enums.ExchangerCode;
+import com.khomishchak.cryptoportfolio.model.exchanger.Balance;
 import com.khomishchak.cryptoportfolio.model.goals.CryptoGoalsTableRecord;
 import com.khomishchak.cryptoportfolio.model.goals.CryptoGoalsRecordUpdateReq;
 import com.khomishchak.cryptoportfolio.model.goals.CryptoGoalsTable;
@@ -26,6 +27,9 @@ import java.util.List;
 @Service
 public class GoalsServiceImpl implements GoalsService {
 
+    public static final int END_OF_PREVIOUS_PERIOD = 2;
+    public static final int END_OF_CURRENT_PERIOD = 1;
+    public static final int PERCENTAGE_SCALE = 100;
     private final CryptoGoalsTableRepository cryptoGoalsTableRepository;
     private final UserService userService;
     private final SelfGoalRepository selfGoalRepository;
@@ -83,7 +87,7 @@ public class GoalsServiceImpl implements GoalsService {
            CryptoGoalsTableRecord tableRecord = cryptoGoalsTable.getTableRecords().stream()
                    .filter(r -> r.getName().equals(record.ticker()))
                    .findFirst()
-                   .orElseThrow(() -> new RuntimeException("fsa"));
+                   .orElseThrow(() -> new GoalsTableRecordNotFoundException(String.format("Record with ticker:%s was not found for table with id:%d", record.ticker(), tableId)));
 
            tableRecord.setAverageCost(tableRecord.getAverageCost()
                    .multiply(tableRecord.getQuantity())
@@ -103,7 +107,7 @@ public class GoalsServiceImpl implements GoalsService {
         result.forEach(goal -> {
             goal.setCurrentAmount(getDepositValueForPeriod(userId, goal.getTicker(), goal.getStartDate(), goal.getEndDate()));
             goal.setAchieved(goal.getCurrentAmount() > goal.getGoalAmount());
-    });
+        });
         return result;
     }
 
@@ -116,7 +120,7 @@ public class GoalsServiceImpl implements GoalsService {
         goals.forEach(g -> {
             g.setUser(user);
             g.setStartDate(LocalDateTime.now());
-            g.setEndDate(LocalDateTime.now().plusMinutes(1));//g.getGoalType().getEndTime());
+            g.setEndDate(g.getGoalType().getEndTime());
             g.setAchieved(g.getCurrentAmount() > g.getGoalAmount());
             g.setCurrentAmount(getDepositValueForPeriod(userId, g.getTicker(), g.getStartDate(), g.getEndDate()));
         });
@@ -131,7 +135,7 @@ public class GoalsServiceImpl implements GoalsService {
     public boolean overdueGoalIsAchieved(SelfGoal goal) {
         GoalType goalType = goal.getGoalType();
         double depositValue = getDepositValueForPeriod(goal.getUser().getId(), goal.getTicker(),
-                goalType.getStartTime(2), goalType.getStartTime(1));
+                goalType.getStartTime(END_OF_PREVIOUS_PERIOD), goalType.getStartTime(END_OF_CURRENT_PERIOD));
 
         goal.setCurrentAmount(depositValue);
         goal.setAchieved(depositValue > goal.getGoalAmount());
@@ -139,10 +143,25 @@ public class GoalsServiceImpl implements GoalsService {
     }
 
     private double getDepositValueForPeriod(long userId, String ticker, LocalDateTime startingData, LocalDateTime endingDate) {
-        return exchangerService.getWithdrawalDepositWalletHistory(userId, ExchangerCode.WHITE_BIT)
+        User user = userService.getUserById(userId);
+        List<ExchangerCode> codes = user.getBalances().stream().map(Balance::getCode).toList();
+
+        if(!codes.isEmpty()) {
+            return codes.stream()
+                    .map(c -> getDepositValueForPeriodForSingleExchanger(userId, ticker, startingData, endingDate, c))
+                    .reduce(0.0, Double::sum);
+        }
+
+        return 0;
+    }
+
+    private double getDepositValueForPeriodForSingleExchanger(long userId, String ticker, LocalDateTime startingData,
+            LocalDateTime endingDate, ExchangerCode code) {
+
+        return exchangerService.getWithdrawalDepositWalletHistory(userId, code)
                 .stream()
                 .filter(transaction -> transaction.getTicker().equalsIgnoreCase(ticker) &&
-                        transaction.getTransactionType().equals(TransactionType.WITHDRAWAL) &&
+                        transaction.getTransactionType().equals(TransactionType.DEPOSIT) &&
                         transaction.getCreatedAt().isAfter(startingData) && transaction.getCreatedAt().isBefore(endingDate))
                 .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add).doubleValue();
@@ -156,7 +175,7 @@ public class GoalsServiceImpl implements GoalsService {
 
         entity.setLeftToBuy(leftToBuy.compareTo(BigDecimal.ZERO) >= 0 ? goalQuantity.subtract(quantity) : BigDecimal.ZERO);
         entity.setDonePercentage(quantity
-                        .multiply(BigDecimal.valueOf(100))
+                        .multiply(BigDecimal.valueOf(PERCENTAGE_SCALE))
                         .divide(goalQuantity, 1, RoundingMode.DOWN));
         entity.setFinished(quantity.compareTo(goalQuantity) >= 0);
 

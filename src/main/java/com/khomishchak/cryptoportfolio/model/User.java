@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -50,6 +51,7 @@ public class User {
     private LocalDateTime createdTime;
     private LocalDateTime lastLoginTime;
 
+    @Column(name = "accept_tc")
     private boolean acceptTC;
 
     @Enumerated(EnumType.STRING)
