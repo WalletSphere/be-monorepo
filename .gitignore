@@ -36,3 +36,6 @@ build/
 .mvn
 mvnw
 *.cmd
+
+### secrets ###
+secret.yaml
