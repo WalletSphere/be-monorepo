@@ -13,7 +13,9 @@ import com.khomishchak.cryptoportfolio.repositories.UserRepository;
 
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import jakarta.transaction.Transactional;
@@ -23,13 +25,14 @@ public class ExchangerServiceImpl implements ExchangerService {
 
     private final UserRepository userRepository;
     private final ApiKeySettingRepository apiKeySettingRepository;
-    private final List<ExchangerConnectorServiceFactory> exchangerServiceFactories;
+    private final Map<ExchangerCode, ExchangerConnectorServiceFactory> exchangerServiceFactories;
 
     public ExchangerServiceImpl(UserRepository userRepository, ApiKeySettingRepository apiKeySettingRepository,
             List<ExchangerConnectorServiceFactory> exchangerServiceFactories) {
         this.userRepository             = userRepository;
         this.apiKeySettingRepository    = apiKeySettingRepository;
-        this.exchangerServiceFactories  = exchangerServiceFactories;
+        this.exchangerServiceFactories  = exchangerServiceFactories.stream()
+                .collect(Collectors.toMap(ExchangerConnectorServiceFactory::getExchangerCode, factory -> factory));
     }
 
     @Override
@@ -48,15 +51,13 @@ public class ExchangerServiceImpl implements ExchangerService {
 
     @Override
     public List<Balance> getAllMainBalances(long userId) {
+        List<Balance> balances = new ArrayList<>();
 
-        List<ExchangerCode> codes = userRepository.getReferenceById(userId).getApiKeysSettings()
-                .stream()
-                .map(ApiKeySetting::getCode).toList();
+        userRepository.getReferenceById(userId).getApiKeysSettings().stream()
+                .map(ApiKeySetting::getCode)
+                .forEach(code -> balances.add(getExchangerConnectorService(code).getMainBalance(userId)));
 
-        return exchangerServiceFactories.stream()
-                .filter(f -> codes.contains(f.getExchangerCode()))
-                .map(f -> f.newInstance().getMainBalance(userId))
-                .collect(Collectors.toList());
+        return balances;
     }
 
     @Override
@@ -66,9 +67,7 @@ public class ExchangerServiceImpl implements ExchangerService {
     }
 
     private ExchangerConnectorService getExchangerConnectorService(ExchangerCode exchangerCode) {
-        ExchangerConnectorServiceFactory factory = exchangerServiceFactories.stream().filter(f -> f.getExchangerCode().equals(exchangerCode))
-                .findFirst().orElseThrow(() -> new RuntimeException("no data for the exchanger with code: " + exchangerCode));
-        return factory.newInstance();
+        return exchangerServiceFactories.get(exchangerCode).newInstance();
     }
 
     private RegisterApiKeysResp generateApiKeysSettingsForUser(User user, String privateKey, String publicApi, ExchangerCode code) {
@@ -86,8 +85,8 @@ public class ExchangerServiceImpl implements ExchangerService {
 
         user.getApiKeysSettings().add(apiKeySetting);
 
-        apiKeySettingRepository.save(apiKeySetting);
+        ApiKeySetting createdApiKeySettings = apiKeySettingRepository.save(apiKeySetting);
 
-        return new RegisterApiKeysResp(user.getId(), apiKeySettingRepository.save(apiKeySetting).getId(), RegistrationStatus.SUCCESSFUL);
+        return new RegisterApiKeysResp(user.getId(), createdApiKeySettings.getId(), RegistrationStatus.SUCCESSFUL);
     }
 }
