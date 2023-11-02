@@ -34,8 +34,8 @@ public class CoinMarketCapServiceImpl implements CoinMarketCapService {
     private final WebClient webClient;
 
     public CoinMarketCapServiceImpl(WebClient webClient,
-            @Value("${crypto.portfolio.integration.exchanger.api.retry.maxAttempts:2}") int retryMaxAttempts,
-            @Value("${crypto.portfolio.integration.exchanger.api.retry.minBackoffSeconds:2}") int retryMinBackoffSeconds) {
+            @Value("${ws.integration.exchanger.api.retry.maxAttempts:2}") int retryMaxAttempts,
+            @Value("${ws.integration.exchanger.api.retry.minBackoffSeconds:2}") int retryMinBackoffSeconds) {
         this.webClient = webClient;
         this.retryMaxAttempts   = retryMaxAttempts;
         this.retryMinBackoff    = Duration.ofSeconds(retryMinBackoffSeconds);

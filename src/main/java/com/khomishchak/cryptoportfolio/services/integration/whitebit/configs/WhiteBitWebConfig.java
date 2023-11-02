@@ -20,10 +20,10 @@ public class WhiteBitWebConfig {
     @Qualifier("WhiteBitApiHttpClient")
     @Bean
     HttpClient whiteBitApiHttpClient(
-            @Value("${crypto-portfolio.integration.whitebit.api.timeout.response:10}") int responseTimeoutSeconds,
-            @Value("${crypto-portfolio.integration.whitebit.api.timeout.connection:5}") int connectionTimeoutSeconds,
-            @Value("${crypto-portfolio.integration.whitebit.api.timeout.read:5}") int readTimeoutSeconds,
-            @Value("${crypto-portfolio.integration.whitebit.api.timeout.write:5}") int writeTimeoutSeconds) {
+            @Value("${ws.integration.whitebit.api.timeout.response:10}") int responseTimeoutSeconds,
+            @Value("${ws.integration.whitebit.api.timeout.connection:5}") int connectionTimeoutSeconds,
+            @Value("${ws.integration.whitebit.api.timeout.read:5}") int readTimeoutSeconds,
+            @Value("${ws.integration.whitebit.api.timeout.write:5}") int writeTimeoutSeconds) {
 
         return HttpClient.create()
                 .responseTimeout(Duration.ofSeconds(responseTimeoutSeconds))

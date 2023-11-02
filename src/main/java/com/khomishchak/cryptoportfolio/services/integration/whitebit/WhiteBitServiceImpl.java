@@ -1,15 +1,14 @@
 package com.khomishchak.cryptoportfolio.services.integration.whitebit;
 
+import com.khomishchak.cryptoportfolio.adapters.ApiKeySettingRepositoryAdapter;
 import com.khomishchak.cryptoportfolio.model.DepositWithdrawalTransaction;
 
+import com.khomishchak.cryptoportfolio.model.exchanger.DecryptedApiKeySettingDTO;
 import com.khomishchak.cryptoportfolio.services.integration.whitebit.exceptions.WhiteBitClientException;
 import com.khomishchak.cryptoportfolio.services.integration.whitebit.exceptions.WhiteBitServerException;
 import com.khomishchak.cryptoportfolio.model.enums.ExchangerCode;
-import com.khomishchak.cryptoportfolio.model.exchanger.ApiKeySetting;
-import com.khomishchak.cryptoportfolio.model.exchanger.ApiKeysPair;
 import com.khomishchak.cryptoportfolio.model.exchanger.Balance;
 import com.khomishchak.cryptoportfolio.model.exchanger.Currency;
-import com.khomishchak.cryptoportfolio.repositories.ApiKeySettingRepository;
 import com.khomishchak.cryptoportfolio.repositories.BalanceRepository;
 import com.khomishchak.cryptoportfolio.repositories.UserRepository;
 import com.khomishchak.cryptoportfolio.services.integration.whitebit.mappers.WhiteBitResponseMapper;
@@ -59,7 +58,7 @@ public class WhiteBitServiceImpl implements WhiteBitService {
     private static final ExchangerCode CODE = ExchangerCode.WHITE_BIT;
 
     private final UserRepository userRepository;
-    private final ApiKeySettingRepository apiKeySettingRepository;
+    private final ApiKeySettingRepositoryAdapter apiKeySettingRepositoryAdapter;
     private final BalanceRepository balanceRepository;
     private final WebClient webClient;
     private final int retryMaxAttempts;
@@ -68,32 +67,33 @@ public class WhiteBitServiceImpl implements WhiteBitService {
     private final WhiteBitResponseMapper responseMapper;
 
     public WhiteBitServiceImpl(UserRepository userRepository, BalanceRepository balanceRepository,
-            @Qualifier("WhiteBitApiWebClient") WebClient webClient, ApiKeySettingRepository apiKeySettingRepository,
-            @Value("${crypto.portfolio.integration.exchanger.api.retry.maxAttempts:2}") int retryMaxAttempts,
-            @Value("${crypto.portfolio.integration.exchanger.api.retry.minBackoffSeconds:2}") int retryMinBackoffSeconds,
+            @Qualifier("WhiteBitApiWebClient") WebClient webClient, ApiKeySettingRepositoryAdapter apiKeySettingRepositoryAdapter,
+            @Value("${ws.integration.exchanger.api.retry.maxAttempts:2}") int retryMaxAttempts,
+            @Value("${ws.integration.exchanger.api.retry.minBackoffSeconds:2}") int retryMinBackoffSeconds,
             MarketService marketService, WhiteBitResponseMapper responseMapper) {
-        this.userRepository     = userRepository;
-        this.apiKeySettingRepository = apiKeySettingRepository;
-        this.balanceRepository  = balanceRepository;
-        this.webClient          = webClient;
-        this.retryMaxAttempts   = retryMaxAttempts;
-        this.retryMinBackoff    = Duration.ofSeconds(retryMinBackoffSeconds);
-        this.marketService      = marketService;
-        this.responseMapper     = responseMapper;
+        this.userRepository = userRepository;
+        this.apiKeySettingRepositoryAdapter = apiKeySettingRepositoryAdapter;
+        this.balanceRepository = balanceRepository;
+        this.webClient = webClient;
+        this.retryMaxAttempts = retryMaxAttempts;
+        this.retryMinBackoff = Duration.ofSeconds(retryMinBackoffSeconds);
+        this.marketService = marketService;
+        this.responseMapper = responseMapper;
     }
 
     @Override
     public Balance getAccountBalance(long userId) {
-        ApiKeysPair keysPair = getApiKeysPair(userId);
-        String apiKey = keysPair.getPublicApi();
+        DecryptedApiKeySettingDTO decryptedKeysPair = getApiKeysPair(userId);
+        String apiKey = decryptedKeysPair.getPublicKey();
         validateApiKey(apiKey);
 
+        // TODO: create POJO
         String requestJson = String.format("{\"request\":\"%1$s\",\"nonce\":\"%2$s\",\"nonceWindow\":false}",
                 GET_MAIN_BALANCE_URL,
                 System.currentTimeMillis());
 
         WhiteBitBalanceResp response =
-                makeWebPostRequest(GET_MAIN_BALANCE_URL, requestJson, keysPair, WhiteBitBalanceResp.class);
+                makeWebPostRequest(GET_MAIN_BALANCE_URL, requestJson, decryptedKeysPair, WhiteBitBalanceResp.class);
         List<Currency> availableCurrencies = responseMapper.mapToCurrencies(response);
 
         Balance balance = Balance.builder()
@@ -108,10 +108,11 @@ public class WhiteBitServiceImpl implements WhiteBitService {
 
     @Override
     public List<DepositWithdrawalTransaction> getDepositWithdrawalHistory(long userId) {
-        ApiKeysPair keysPair = getApiKeysPair(userId);
-        String apiKey = keysPair.getPublicApi();
+        DecryptedApiKeySettingDTO keysPair = getApiKeysPair(userId);
+        String apiKey = keysPair.getPublicKey();
         validateApiKey(apiKey);
 
+        // TODO: create POJO
         String requestJson = String.format(
                 "{\"offset\":%1$d,\"limit\":%2$d,\"request\":\"%3$s\",\"nonce\":\"%4$s\"}",
                 0, 100, GET_MAIN_BALANCE_DEPOSIT_WITHDRAWAL_HISTORY_URL, System.currentTimeMillis()
@@ -124,7 +125,7 @@ public class WhiteBitServiceImpl implements WhiteBitService {
         return responseMapper.mapWithdrawalDepositHistoryToTransactions(response);
     }
 
-    private <T> T makeWebPostRequest(String uri, String requestJson, ApiKeysPair keysPair, Class<T> responseType) {
+    private <T> T makeWebPostRequest(String uri, String requestJson, DecryptedApiKeySettingDTO keysPair, Class<T> responseType) {
         String payload = Base64.getEncoder().encodeToString(requestJson.getBytes());
         String signature;
         try {
@@ -139,7 +140,7 @@ public class WhiteBitServiceImpl implements WhiteBitService {
                 .uri(uriBuilder.build().toUri())
                 .bodyValue(requestJson)
                 .header("Content-type", "application/json")
-                .header("X-TXC-APIKEY", keysPair.getPublicApi())
+                .header("X-TXC-APIKEY", keysPair.getPublicKey())
                 .header("X-TXC-PAYLOAD", payload)
                 .header("X-TXC-SIGNATURE", signature)
                 .exchangeToMono(resp -> {
@@ -168,12 +169,14 @@ public class WhiteBitServiceImpl implements WhiteBitService {
                 });
     }
 
-    private ApiKeysPair getApiKeysPair(long userId) {
-        List<ApiKeySetting> apiKeys = apiKeySettingRepository.findAllByUserId(userId);
+    private DecryptedApiKeySettingDTO getApiKeysPair(long userId) {
+        List<DecryptedApiKeySettingDTO> apiKeys = apiKeySettingRepositoryAdapter.findAllByUserId(userId);
 
         return apiKeys.stream()
                 .filter(keys -> CODE.equals(keys.getCode()))
-                .map(ApiKeySetting::getApiKeys).findFirst().get();
+                .findFirst()
+                .orElseThrow(
+                        () -> new IllegalArgumentException(String.format("API Keys with for code: %s not present", CODE)));
     }
 
     private Double getTotalPrices(List<Currency> currencies) {
@@ -215,7 +218,7 @@ public class WhiteBitServiceImpl implements WhiteBitService {
     }
 
     private void validateApiKey(String apiKey) {
-        Assert.hasText(apiKey, String.format("IP Key with for code: %s not present", CODE));
+        Assert.hasText(apiKey, String.format("API Key with for code: %s not present", CODE));
     }
 
     private boolean isTimeoutException(final Throwable t) {

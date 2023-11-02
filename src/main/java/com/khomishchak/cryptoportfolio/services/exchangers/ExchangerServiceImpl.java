@@ -11,6 +11,7 @@ import com.khomishchak.cryptoportfolio.model.response.RegisterApiKeysResp;
 import com.khomishchak.cryptoportfolio.repositories.ApiKeySettingRepository;
 import com.khomishchak.cryptoportfolio.repositories.UserRepository;
 
+import com.khomishchak.cryptoportfolio.services.security.encryption.AesEncryptionService;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -26,13 +27,15 @@ public class ExchangerServiceImpl implements ExchangerService {
     private final UserRepository userRepository;
     private final ApiKeySettingRepository apiKeySettingRepository;
     private final Map<ExchangerCode, ExchangerConnectorServiceFactory> exchangerServiceFactories;
+    private final AesEncryptionService aesEncryptionService;
 
     public ExchangerServiceImpl(UserRepository userRepository, ApiKeySettingRepository apiKeySettingRepository,
-            List<ExchangerConnectorServiceFactory> exchangerServiceFactories) {
+            List<ExchangerConnectorServiceFactory> exchangerServiceFactories, AesEncryptionService aesEncryptionService) {
         this.userRepository             = userRepository;
         this.apiKeySettingRepository    = apiKeySettingRepository;
         this.exchangerServiceFactories  = exchangerServiceFactories.stream()
                 .collect(Collectors.toMap(ExchangerConnectorServiceFactory::getExchangerCode, factory -> factory));
+        this.aesEncryptionService       = aesEncryptionService;
     }
 
     @Override
@@ -72,8 +75,8 @@ public class ExchangerServiceImpl implements ExchangerService {
 
     private RegisterApiKeysResp generateApiKeysSettingsForUser(User user, String privateKey, String publicApi, ExchangerCode code) {
         ApiKeysPair apiKeysPair = ApiKeysPair.builder()
-                .publicApi(publicApi)
-                .privateKey(privateKey)
+                .publicApi(aesEncryptionService.encrypt(publicApi))
+                .privateKey(aesEncryptionService.encrypt(privateKey))
                 .build();
 
         ApiKeySetting apiKeySetting = ApiKeySetting.

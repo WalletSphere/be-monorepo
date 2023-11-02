@@ -105,7 +105,7 @@ public class GoalsServiceImpl implements GoalsService {
         List<SelfGoal> result = selfGoalRepository.findAllByUserId(userId);
 
         result.forEach(goal -> {
-            goal.setCurrentAmount(getDepositValueForPeriod(userId, goal.getTicker(), goal.getStartDate(), goal.getEndDate()));
+            goal.setCurrentAmount(getDepositValueForPeriod(userService.getUserById(userId), goal.getTicker(), goal.getStartDate(), goal.getEndDate()));
             goal.setAchieved(goal.getCurrentAmount() > goal.getGoalAmount());
         });
         return result;
@@ -122,7 +122,7 @@ public class GoalsServiceImpl implements GoalsService {
             g.setStartDate(LocalDateTime.now());
             g.setEndDate(g.getGoalType().getEndTime());
             g.setAchieved(g.getCurrentAmount() > g.getGoalAmount());
-            g.setCurrentAmount(getDepositValueForPeriod(userId, g.getTicker(), g.getStartDate(), g.getEndDate()));
+            g.setCurrentAmount(getDepositValueForPeriod(user, g.getTicker(), g.getStartDate(), g.getEndDate()));
         });
 
         userService.saveUser(user);
@@ -134,7 +134,7 @@ public class GoalsServiceImpl implements GoalsService {
     @Override
     public boolean overdueGoalIsAchieved(SelfGoal goal) {
         GoalType goalType = goal.getGoalType();
-        double depositValue = getDepositValueForPeriod(goal.getUser().getId(), goal.getTicker(),
+        double depositValue = getDepositValueForPeriod(goal.getUser(), goal.getTicker(),
                 goalType.getStartTime(END_OF_PREVIOUS_PERIOD), goalType.getStartTime(END_OF_CURRENT_PERIOD));
 
         goal.setCurrentAmount(depositValue);
@@ -142,27 +142,21 @@ public class GoalsServiceImpl implements GoalsService {
         return selfGoalRepository.save(goal).isAchieved();
     }
 
-    private double getDepositValueForPeriod(long userId, String ticker, LocalDateTime startingData, LocalDateTime endingDate) {
-        User user = userService.getUserById(userId);
-        List<ExchangerCode> codes = user.getBalances().stream().map(Balance::getCode).toList();
-
-        if(!codes.isEmpty()) {
-            return codes.stream()
-                    .map(c -> getDepositValueForPeriodForSingleExchanger(userId, ticker, startingData, endingDate, c))
-                    .reduce(0.0, Double::sum);
-        }
-
-        return 0;
+    private double getDepositValueForPeriod(User user, String ticker, LocalDateTime startingData, LocalDateTime endingDate) {
+        return user.getBalances().stream()
+                .map(Balance::getCode)
+                .map(c -> getDepositValueForPeriodForSingleExchanger(user.getId(), ticker, startingData, endingDate, c))
+                .reduce(0.0, Double::sum);
     }
 
-    private double getDepositValueForPeriodForSingleExchanger(long userId, String ticker, LocalDateTime startingData,
+    private double getDepositValueForPeriodForSingleExchanger(long userId, String ticker, LocalDateTime startingDate,
             LocalDateTime endingDate, ExchangerCode code) {
 
         return exchangerService.getWithdrawalDepositWalletHistory(userId, code)
                 .stream()
                 .filter(transaction -> transaction.getTicker().equalsIgnoreCase(ticker) &&
                         transaction.getTransactionType().equals(TransactionType.DEPOSIT) &&
-                        transaction.getCreatedAt().isAfter(startingData) && transaction.getCreatedAt().isBefore(endingDate))
+                        transaction.getCreatedAt().isAfter(startingDate) && transaction.getCreatedAt().isBefore(endingDate))
                 .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add).doubleValue();
     }
