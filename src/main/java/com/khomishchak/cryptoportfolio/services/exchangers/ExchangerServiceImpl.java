@@ -7,10 +7,14 @@ import com.khomishchak.cryptoportfolio.model.enums.RegistrationStatus;
 import com.khomishchak.cryptoportfolio.model.exchanger.ApiKeySetting;
 import com.khomishchak.cryptoportfolio.model.exchanger.ApiKeysPair;
 import com.khomishchak.cryptoportfolio.model.exchanger.Balance;
+import com.khomishchak.cryptoportfolio.model.requests.RegisterApiKeysReq;
+import com.khomishchak.cryptoportfolio.model.requests.RegisterExchangerInfoReq;
+import com.khomishchak.cryptoportfolio.model.response.FirstlyGeneratedBalanceResp;
 import com.khomishchak.cryptoportfolio.model.response.RegisterApiKeysResp;
 import com.khomishchak.cryptoportfolio.repositories.ApiKeySettingRepository;
 import com.khomishchak.cryptoportfolio.repositories.UserRepository;
 
+import com.khomishchak.cryptoportfolio.services.exchangers.balances.BalanceService;
 import com.khomishchak.cryptoportfolio.services.security.encryption.AesEncryptionService;
 import org.springframework.stereotype.Service;
 
@@ -28,22 +32,31 @@ public class ExchangerServiceImpl implements ExchangerService {
     private final ApiKeySettingRepository apiKeySettingRepository;
     private final Map<ExchangerCode, ExchangerConnectorServiceFactory> exchangerServiceFactories;
     private final AesEncryptionService aesEncryptionService;
+    private final BalanceService balanceService;
 
     public ExchangerServiceImpl(UserRepository userRepository, ApiKeySettingRepository apiKeySettingRepository,
-            List<ExchangerConnectorServiceFactory> exchangerServiceFactories, AesEncryptionService aesEncryptionService) {
-        this.userRepository             = userRepository;
-        this.apiKeySettingRepository    = apiKeySettingRepository;
-        this.exchangerServiceFactories  = exchangerServiceFactories.stream()
+            List<ExchangerConnectorServiceFactory> exchangerServiceFactories, AesEncryptionService aesEncryptionService,
+                                BalanceService balanceService) {
+        this.userRepository = userRepository;
+        this.apiKeySettingRepository = apiKeySettingRepository;
+        this.exchangerServiceFactories = exchangerServiceFactories.stream()
                 .collect(Collectors.toMap(ExchangerConnectorServiceFactory::getExchangerCode, factory -> factory));
-        this.aesEncryptionService       = aesEncryptionService;
+        this.aesEncryptionService = aesEncryptionService;
+        this.balanceService = balanceService;
     }
 
     @Override
     @Transactional
-    public RegisterApiKeysResp persistExchangerApiKeysForUser(String apiPublicKey, String apiPrivateKey, long userId, ExchangerCode code) {
+    public FirstlyGeneratedBalanceResp addGeneralExchangerInfo(RegisterExchangerInfoReq exchangerInfoReq, long userId) {
         User user = userRepository.getReferenceById(userId);
+        RegisterApiKeysReq apiKeys = exchangerInfoReq.apiKeysReq();
+        ExchangerCode code = apiKeys.code();
 
-        return generateApiKeysSettingsForUser(user, apiPrivateKey, apiPublicKey, code);
+        generateApiKeysSettingsForUser(user, apiKeys.secretKey(), apiKeys.publicKey(), code);
+
+        Balance emptyBalance = balanceService.registerBalanceEntryInfo(code, exchangerInfoReq.balanceName(), user);
+
+        return new FirstlyGeneratedBalanceResp(emptyBalance.getId(), userId, RegistrationStatus.SUCCESSFUL);
     }
 
     @Override

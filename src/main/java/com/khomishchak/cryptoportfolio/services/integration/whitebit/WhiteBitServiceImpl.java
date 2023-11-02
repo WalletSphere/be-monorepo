@@ -4,17 +4,15 @@ import com.khomishchak.cryptoportfolio.adapters.ApiKeySettingRepositoryAdapter;
 import com.khomishchak.cryptoportfolio.model.DepositWithdrawalTransaction;
 
 import com.khomishchak.cryptoportfolio.model.exchanger.DecryptedApiKeySettingDTO;
+import com.khomishchak.cryptoportfolio.services.exchangers.balances.BalanceService;
 import com.khomishchak.cryptoportfolio.services.integration.whitebit.exceptions.WhiteBitClientException;
 import com.khomishchak.cryptoportfolio.services.integration.whitebit.exceptions.WhiteBitServerException;
 import com.khomishchak.cryptoportfolio.model.enums.ExchangerCode;
 import com.khomishchak.cryptoportfolio.model.exchanger.Balance;
 import com.khomishchak.cryptoportfolio.model.exchanger.Currency;
-import com.khomishchak.cryptoportfolio.repositories.BalanceRepository;
-import com.khomishchak.cryptoportfolio.repositories.UserRepository;
 import com.khomishchak.cryptoportfolio.services.integration.whitebit.mappers.WhiteBitResponseMapper;
 import com.khomishchak.cryptoportfolio.services.integration.whitebit.model.WhiteBitBalanceResp;
 import com.khomishchak.cryptoportfolio.services.integration.whitebit.model.WhiteBitDepositWithdrawalHistoryResp;
-import com.khomishchak.cryptoportfolio.services.markets.MarketService;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,9 +30,6 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.Formatter;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -57,27 +52,23 @@ public class WhiteBitServiceImpl implements WhiteBitService {
 
     private static final ExchangerCode CODE = ExchangerCode.WHITE_BIT;
 
-    private final UserRepository userRepository;
     private final ApiKeySettingRepositoryAdapter apiKeySettingRepositoryAdapter;
-    private final BalanceRepository balanceRepository;
+    private final BalanceService balanceService;
     private final WebClient webClient;
     private final int retryMaxAttempts;
     private final Duration retryMinBackoff;
-    private final MarketService marketService;
     private final WhiteBitResponseMapper responseMapper;
 
-    public WhiteBitServiceImpl(UserRepository userRepository, BalanceRepository balanceRepository,
+    public WhiteBitServiceImpl(BalanceService balanceService,
             @Qualifier("WhiteBitApiWebClient") WebClient webClient, ApiKeySettingRepositoryAdapter apiKeySettingRepositoryAdapter,
             @Value("${ws.integration.exchanger.api.retry.maxAttempts:2}") int retryMaxAttempts,
             @Value("${ws.integration.exchanger.api.retry.minBackoffSeconds:2}") int retryMinBackoffSeconds,
-            MarketService marketService, WhiteBitResponseMapper responseMapper) {
-        this.userRepository = userRepository;
+            WhiteBitResponseMapper responseMapper) {
         this.apiKeySettingRepositoryAdapter = apiKeySettingRepositoryAdapter;
-        this.balanceRepository = balanceRepository;
+        this.balanceService = balanceService;
         this.webClient = webClient;
         this.retryMaxAttempts = retryMaxAttempts;
         this.retryMinBackoff = Duration.ofSeconds(retryMinBackoffSeconds);
-        this.marketService = marketService;
         this.responseMapper = responseMapper;
     }
 
@@ -96,14 +87,7 @@ public class WhiteBitServiceImpl implements WhiteBitService {
                 makeWebPostRequest(GET_MAIN_BALANCE_URL, requestJson, decryptedKeysPair, WhiteBitBalanceResp.class);
         List<Currency> availableCurrencies = responseMapper.mapToCurrencies(response);
 
-        Balance balance = Balance.builder()
-                .code(CODE)
-                .user(userRepository.getReferenceById(userId))
-                .totalValue(getTotalPrices(availableCurrencies))
-                .currencies(availableCurrencies)
-                .build();
-
-        return balanceRepository.save(balance);
+        return balanceService.getBalanceByCodeAndUserId(CODE, userId, availableCurrencies);
     }
 
     @Override
@@ -177,27 +161,6 @@ public class WhiteBitServiceImpl implements WhiteBitService {
                 .findFirst()
                 .orElseThrow(
                         () -> new IllegalArgumentException(String.format("API Keys with for code: %s not present", CODE)));
-    }
-
-    private Double getTotalPrices(List<Currency> currencies) {
-
-
-        Map<String, Double> marketValues = marketService.getCurrentMarketValues();
-        Map<String, Currency> currencyMap = currencies.stream()
-                .collect(Collectors.toMap(Currency::getCurrencyCode, Function.identity()));
-
-
-        double totalValue = 0;
-        for (Map.Entry<String, Double> entry : marketValues.entrySet()) {
-            Currency currency = currencyMap.get(entry.getKey());
-            if (currency != null) {
-                double currencyTotalValue = entry.getValue() * currency.getAmount();
-                currency.setTotalValue(currencyTotalValue);
-                totalValue += currencyTotalValue;
-            }
-        }
-
-        return totalValue;
     }
 
     private static String calcSignature(String data, String secretKey)

@@ -3,8 +3,8 @@ package com.khomishchak.cryptoportfolio.controllers;
 import com.khomishchak.cryptoportfolio.model.DepositWithdrawalTransaction;
 import com.khomishchak.cryptoportfolio.model.enums.ExchangerCode;
 import com.khomishchak.cryptoportfolio.model.exchanger.Balance;
-import com.khomishchak.cryptoportfolio.model.requests.RegisterApiKeysReq;
-import com.khomishchak.cryptoportfolio.model.response.RegisterApiKeysResp;
+import com.khomishchak.cryptoportfolio.model.requests.RegisterExchangerInfoReq;
+import com.khomishchak.cryptoportfolio.model.response.FirstlyGeneratedBalanceResp;
 import com.khomishchak.cryptoportfolio.services.exchangers.ExchangerService;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,9 +28,9 @@ public class ExchangerController {
     }
 
     @PostMapping("/api-keys")
-    public RegisterApiKeysResp addExchangerApiKeysForUser(@RequestAttribute Long userId, @RequestBody RegisterApiKeysReq balanceReq) {
-        return exchangerService.persistExchangerApiKeysForUser(balanceReq.publicKey(), balanceReq.secretKey() , userId,
-                balanceReq.code());
+    public FirstlyGeneratedBalanceResp addExchangerApiKeysForUser(@RequestAttribute Long userId,
+                                                                  @RequestBody RegisterExchangerInfoReq exchangerInfoReq) {
+        return exchangerService.addGeneralExchangerInfo(exchangerInfoReq , userId);
     }
 
     @GetMapping("/balance/{exchangerCode}")

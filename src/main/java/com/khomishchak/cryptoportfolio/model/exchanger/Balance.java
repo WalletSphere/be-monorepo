@@ -30,12 +30,14 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class Balance {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private String balanceName;
 
     @Enumerated(value = EnumType.STRING)
     private ExchangerCode code;
