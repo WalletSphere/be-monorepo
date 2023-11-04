@@ -1,4 +1,6 @@
 package com.khomishchak.cryptoportfolio.model.requests;
 
-public record RegisterExchangerInfoReq(RegisterApiKeysReq apiKeysReq, String balanceName) {
+import com.khomishchak.cryptoportfolio.model.enums.ExchangerCode;
+
+public record RegisterExchangerInfoReq(RegisterApiKeysReq apiKeysReq, ExchangerCode code, String balanceName) {
 }

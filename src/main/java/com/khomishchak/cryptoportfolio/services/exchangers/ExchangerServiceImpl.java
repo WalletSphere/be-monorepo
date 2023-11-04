@@ -50,7 +50,7 @@ public class ExchangerServiceImpl implements ExchangerService {
     public FirstlyGeneratedBalanceResp addGeneralExchangerInfo(RegisterExchangerInfoReq exchangerInfoReq, long userId) {
         User user = userRepository.getReferenceById(userId);
         RegisterApiKeysReq apiKeys = exchangerInfoReq.apiKeysReq();
-        ExchangerCode code = apiKeys.code();
+        ExchangerCode code = exchangerInfoReq.code();
 
         generateApiKeysSettingsForUser(user, apiKeys.secretKey(), apiKeys.publicKey(), code);
 
