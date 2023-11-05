@@ -4,7 +4,7 @@ import com.khomishchak.cryptoportfolio.adapters.ApiKeySettingRepositoryAdapter;
 import com.khomishchak.cryptoportfolio.model.DepositWithdrawalTransaction;
 
 import com.khomishchak.cryptoportfolio.model.exchanger.DecryptedApiKeySettingDTO;
-import com.khomishchak.cryptoportfolio.services.exchangers.balances.BalanceService;
+import com.khomishchak.cryptoportfolio.repositories.BalanceRepository;
 import com.khomishchak.cryptoportfolio.services.integration.whitebit.exceptions.WhiteBitClientException;
 import com.khomishchak.cryptoportfolio.services.integration.whitebit.exceptions.WhiteBitServerException;
 import com.khomishchak.cryptoportfolio.model.enums.ExchangerCode;
@@ -27,6 +27,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Formatter;
 import java.util.List;
@@ -53,19 +55,20 @@ public class WhiteBitServiceImpl implements WhiteBitService {
     private static final ExchangerCode CODE = ExchangerCode.WHITE_BIT;
 
     private final ApiKeySettingRepositoryAdapter apiKeySettingRepositoryAdapter;
-    private final BalanceService balanceService;
+    // TODO: worth to add a new service layer in order to remove direct interaction with repository
+    private final BalanceRepository balanceRepository;
     private final WebClient webClient;
     private final int retryMaxAttempts;
     private final Duration retryMinBackoff;
     private final WhiteBitResponseMapper responseMapper;
 
-    public WhiteBitServiceImpl(BalanceService balanceService,
+    public WhiteBitServiceImpl(BalanceRepository balanceRepository,
             @Qualifier("WhiteBitApiWebClient") WebClient webClient, ApiKeySettingRepositoryAdapter apiKeySettingRepositoryAdapter,
             @Value("${ws.integration.exchanger.api.retry.maxAttempts:2}") int retryMaxAttempts,
             @Value("${ws.integration.exchanger.api.retry.minBackoffSeconds:2}") int retryMinBackoffSeconds,
             WhiteBitResponseMapper responseMapper) {
         this.apiKeySettingRepositoryAdapter = apiKeySettingRepositoryAdapter;
-        this.balanceService = balanceService;
+        this.balanceRepository = balanceRepository;
         this.webClient = webClient;
         this.retryMaxAttempts = retryMaxAttempts;
         this.retryMinBackoff = Duration.ofSeconds(retryMinBackoffSeconds);
@@ -87,7 +90,11 @@ public class WhiteBitServiceImpl implements WhiteBitService {
                 makeWebPostRequest(GET_MAIN_BALANCE_URL, requestJson, decryptedKeysPair, WhiteBitBalanceResp.class);
         List<Currency> availableCurrencies = responseMapper.mapToCurrencies(response);
 
-        return balanceService.getBalanceByCodeAndUserId(CODE, userId, availableCurrencies);
+        //TODO: new service layer
+        Balance balance = balanceRepository.findByCodeAndUser_Id(CODE, userId).get();
+        balance.setCurrencies(availableCurrencies);
+        balance.setLastTimeWasUpdated(LocalDateTime.now());
+        return balance;
     }
 
     @Override

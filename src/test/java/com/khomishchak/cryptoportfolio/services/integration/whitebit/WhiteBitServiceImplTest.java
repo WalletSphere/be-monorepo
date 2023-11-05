@@ -1,7 +1,5 @@
 package com.khomishchak.cryptoportfolio.services.integration.whitebit;
 
-import static org.mockito.ArgumentMatchers.eq;
-import static org.assertj.core.api.Assertions.assertThat;
 
 class WhiteBitServiceImplTest {
 

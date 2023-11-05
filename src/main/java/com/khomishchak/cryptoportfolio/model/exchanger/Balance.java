@@ -6,6 +6,7 @@ import com.khomishchak.cryptoportfolio.model.User;
 import com.khomishchak.cryptoportfolio.model.enums.ExchangerCode;
 
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import jakarta.persistence.ElementCollection;
@@ -38,6 +39,8 @@ public class Balance {
     private Long id;
 
     private String balanceName;
+
+    private LocalDateTime lastTimeWasUpdated;
 
     @Enumerated(value = EnumType.STRING)
     private ExchangerCode code;

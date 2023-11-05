@@ -20,9 +20,19 @@ public class BalancePricingServiceImpl implements BalancePricingService {
     }
 
     @Override
-    public void calculateBalanceValueUpToDate(Balance balance, List<Currency> currencies) {
+    public void calculateBalanceValueUpToDate(Balance balance) {
         Map<String, Double> marketValues = marketService.getCurrentMarketValues();
-        Map<String, Currency> currencyMap = currencies.stream()
+        handleBalanceTotalValueCalculation(balance, marketValues);
+    }
+
+    @Override
+    public void calculateBalancesValuesUpToDate(List<Balance> balances) {
+        Map<String, Double> marketValues = marketService.getCurrentMarketValues();
+        balances.forEach(balance -> handleBalanceTotalValueCalculation(balance, marketValues));
+    }
+
+    private void handleBalanceTotalValueCalculation(Balance balance, Map<String, Double> marketValues) {
+        Map<String, Currency> currencyMap = balance.getCurrencies().stream()
                 .collect(Collectors.toMap(Currency::getCurrencyCode, Function.identity()));
 
 
@@ -38,4 +48,5 @@ public class BalancePricingServiceImpl implements BalancePricingService {
 
         balance.setTotalValue(totalValue);
     }
+
 }
