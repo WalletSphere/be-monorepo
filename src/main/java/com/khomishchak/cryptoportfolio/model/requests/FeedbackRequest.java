@@ -2,5 +2,5 @@ package com.khomishchak.cryptoportfolio.model.requests;
 
 import com.khomishchak.cryptoportfolio.model.enums.FeedbackType;
 
-public record FeedbackRequest (Long userId, FeedbackType feedbackType, String message) {
+public record FeedbackRequest (FeedbackType feedbackType, String message) {
 }

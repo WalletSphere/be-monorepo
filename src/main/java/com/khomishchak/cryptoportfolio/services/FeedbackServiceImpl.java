@@ -23,8 +23,8 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
-    public CreateFeedbackResp saveFeedback(FeedbackRequest feedbackRequest) {
-        User user = userService.getUserById(feedbackRequest.userId());
+    public CreateFeedbackResp saveFeedback(FeedbackRequest feedbackRequest, long userId) {
+        User user = userService.getUserById(userId);
 
         Feedback newFeedback = Feedback.builder()
                 .feedbackType(feedbackRequest.feedbackType())

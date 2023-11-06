@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface FeedbackService {
 
-    CreateFeedbackResp saveFeedback(FeedbackRequest feedbackRequest);
+    CreateFeedbackResp saveFeedback(FeedbackRequest feedbackRequest, long userId);
 
     List<Feedback> getAllFeedbacks();
 }
