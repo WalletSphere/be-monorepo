@@ -1,7 +1,7 @@
 package com.khomishchak.cryptoportfolio.services.integration.whitebit.mappers;
 
 import com.khomishchak.cryptoportfolio.model.DepositWithdrawalTransaction;
-import com.khomishchak.cryptoportfolio.model.TransactionType;
+import com.khomishchak.cryptoportfolio.model.TransferTransactionType;
 import com.khomishchak.cryptoportfolio.model.exchanger.Currency;
 import com.khomishchak.cryptoportfolio.services.integration.whitebit.model.WhiteBitBalanceResp;
 import com.khomishchak.cryptoportfolio.services.integration.whitebit.model.WhiteBitDepositWithdrawalHistoryResp;
@@ -46,7 +46,7 @@ public class WhiteBitResponseMapper {
                             .createdAt(LocalDateTime.ofInstant(Instant.ofEpochMilli(record.getCreatedAt() * 1000), ZoneId.systemDefault()))
                             .amount(BigDecimal.valueOf(record.getAmount()))
                             .ticker(record.getTicker())
-                            .transactionType(record.getMethod() == 1 ? TransactionType.DEPOSIT : TransactionType.WITHDRAWAL)
+                            .transferTransactionType(record.getMethod() == 1 ? TransferTransactionType.DEPOSIT : TransferTransactionType.WITHDRAWAL)
                             .build();
 
                     result.add(transaction);

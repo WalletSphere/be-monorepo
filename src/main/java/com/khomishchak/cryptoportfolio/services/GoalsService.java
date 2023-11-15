@@ -1,5 +1,6 @@
 package com.khomishchak.cryptoportfolio.services;
 
+import com.khomishchak.cryptoportfolio.model.goals.CryptoGoalTableTransaction;
 import com.khomishchak.cryptoportfolio.model.goals.CryptoGoalsRecordUpdateReq;
 import com.khomishchak.cryptoportfolio.model.goals.CryptoGoalsTable;
 import com.khomishchak.cryptoportfolio.model.goals.SelfGoal;
@@ -14,7 +15,7 @@ public interface GoalsService {
 
     CryptoGoalsTable updateCryptoGoalsTable(CryptoGoalsTable cryptoGoalsTable);
 
-    CryptoGoalsTable updateCryptoGoalsTableRecords(List<CryptoGoalsRecordUpdateReq> recordUpdateReq, long tableId);
+    CryptoGoalsTable updateCryptoGoalsTable(CryptoGoalTableTransaction transaction, long tableId);
 
     List<SelfGoal> getSelfGoals(Long userId);
 

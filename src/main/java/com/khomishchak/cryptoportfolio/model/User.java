@@ -7,6 +7,7 @@ import com.khomishchak.cryptoportfolio.model.goals.CryptoGoalsTable;
 import com.khomishchak.cryptoportfolio.model.goals.SelfGoal;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
@@ -70,5 +71,5 @@ public class User {
     private List<SelfGoal> selfGoals;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private List<Feedback> feedbacks;
+    private List<Feedback> feedbacks = new ArrayList<>();
 }

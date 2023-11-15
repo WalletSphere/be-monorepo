@@ -1,5 +1,6 @@
 package com.khomishchak.cryptoportfolio.controllers;
 
+import com.khomishchak.cryptoportfolio.model.goals.CryptoGoalTableTransaction;
 import com.khomishchak.cryptoportfolio.model.goals.CryptoGoalsRecordUpdateReq;
 import com.khomishchak.cryptoportfolio.model.goals.CryptoGoalsTable;
 import com.khomishchak.cryptoportfolio.model.goals.SelfGoal;
@@ -41,14 +42,14 @@ public class GoalsController {
     }
 
     @PutMapping("/crypto-tables")
-    public ResponseEntity<CryptoGoalsTable> updateCryptoGoalsTable(@RequestBody CryptoGoalsTable cryptoGoalsTable) {
+    public ResponseEntity<CryptoGoalsTable> updateWholeCryptoGoalsTable(@RequestBody CryptoGoalsTable cryptoGoalsTable) {
         return new ResponseEntity<>(goalsService.updateCryptoGoalsTable(cryptoGoalsTable), HttpStatus.OK);
     }
 
-    @PutMapping("/crypto-tables/{tableId}/records")
-    public ResponseEntity<CryptoGoalsTable> updateCryptoGoalsTableRecord(
-            @RequestBody List<CryptoGoalsRecordUpdateReq> recordUpdateReq, @PathVariable Long tableId) {
-        return new ResponseEntity<>(goalsService.updateCryptoGoalsTableRecords(recordUpdateReq, tableId), HttpStatus.OK);
+    @PutMapping("/{tableId}/crypto-tables")
+    public ResponseEntity<CryptoGoalsTable> updateCryptoGoalsTableWithSingleTransaction(
+            @RequestBody CryptoGoalTableTransaction transaction, @PathVariable Long tableId) {
+        return new ResponseEntity<>(goalsService.updateCryptoGoalsTable(transaction, tableId), HttpStatus.OK);
     }
 
     @GetMapping("/self-goals")
