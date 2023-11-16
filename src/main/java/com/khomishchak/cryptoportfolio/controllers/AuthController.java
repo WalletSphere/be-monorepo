@@ -6,6 +6,8 @@ import com.khomishchak.cryptoportfolio.model.response.LoginResult;
 import com.khomishchak.cryptoportfolio.model.response.RegistrationResult;
 import com.khomishchak.cryptoportfolio.services.UserService;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@Validated
 public class AuthController {
 
     private final UserService userService;
@@ -25,7 +28,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<RegistrationResult> register(@RequestBody @Validated RegistrationRequest registrationRequest) {
+    public ResponseEntity<RegistrationResult> register(@RequestBody @Valid RegistrationRequest registrationRequest) {
         return new ResponseEntity<>(userService.registerUser(registrationRequest), HttpStatus.CREATED);
     }
 
