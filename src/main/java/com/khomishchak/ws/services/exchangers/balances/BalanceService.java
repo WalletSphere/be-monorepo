@@ -11,6 +11,6 @@ public interface BalanceService {
     Balance registerBalanceEntryInfo(ExchangerCode code, String balanceName, User user);
     List<Balance> getMainBalances(long userId);
     Balance getMainBalance(long userId, ExchangerCode exchangerCode);
-    Balance removeBalance(long userId, ExchangerCode exchangerCode);
+    void deleteBalance(long balanceId);
     List<Balance> synchronizeBalances(long userId);
 }

@@ -1,11 +1,11 @@
 package com.khomishchak.ws.services;
 
 import com.khomishchak.ws.exceptions.GoalsTableNotFoundException;
-import com.khomishchak.ws.model.Transaction;
+import com.khomishchak.ws.model.exchanger.transaction.ExchangerDepositWithdrawalTransactions;
+import com.khomishchak.ws.model.exchanger.transaction.Transaction;
 import com.khomishchak.ws.model.TransactionType;
 import com.khomishchak.ws.model.TransferTransactionType;
 import com.khomishchak.ws.model.User;
-import com.khomishchak.ws.model.enums.ExchangerCode;
 import com.khomishchak.ws.model.enums.GoalType;
 import com.khomishchak.ws.model.exchanger.Balance;
 import com.khomishchak.ws.model.goals.*;
@@ -32,7 +32,7 @@ public class GoalsServiceImpl implements GoalsService {
     private final ExchangerService exchangerService;
 
     public GoalsServiceImpl(CryptoGoalsTableRepository cryptoGoalsTableRepository, UserService userService,
-            SelfGoalRepository selfGoalRepository, ExchangerService exchangerService) {
+                            SelfGoalRepository selfGoalRepository, ExchangerService exchangerService) {
         this.cryptoGoalsTableRepository = cryptoGoalsTableRepository;
         this.userService = userService;
         this.selfGoalRepository = selfGoalRepository;
@@ -91,8 +91,8 @@ public class GoalsServiceImpl implements GoalsService {
 
     private BigDecimal calculateNewQuantity(CryptoGoalsTableRecord oldRecord, CryptoGoalTableTransaction transaction) {
         return TransactionType.BUY.equals(transaction.getTransactionType())
-            ? oldRecord.getQuantity().add(transaction.getQuantity())
-            : oldRecord.getQuantity().subtract(transaction.getQuantity());
+                ? oldRecord.getQuantity().add(transaction.getQuantity())
+                : oldRecord.getQuantity().subtract(transaction.getQuantity());
     }
 
     private BigDecimal calculateNewAveragePriceAfterTransaction(CryptoGoalsTableRecord oldRecord,
@@ -184,15 +184,22 @@ public class GoalsServiceImpl implements GoalsService {
     private double getDepositValueForPeriod(User user, String ticker, LocalDateTime startingData, LocalDateTime endingDate) {
         return user.getBalances().stream()
                 .map(Balance::getCode)
-                .map(c -> getDepositValueForPeriodForSingleExchanger(user.getId(), ticker, startingData, endingDate, c))
+                .map(c -> getDepositValueForPeriod(user.getId(), ticker, startingData, endingDate))
                 .reduce(0.0, Double::sum);
     }
 
-    private double getDepositValueForPeriodForSingleExchanger(long userId, String ticker, LocalDateTime startingDate,
-            LocalDateTime endingDate, ExchangerCode code) {
+    private double getDepositValueForPeriod(long userId, String ticker, LocalDateTime startingDate,
+                                            LocalDateTime endingDate) {
 
-        return exchangerService.getWithdrawalDepositWalletHistory(userId, code)
-                .stream()
+        return exchangerService.getWithdrawalDepositWalletHistory(userId).stream()
+                .map(transactions -> getDepositValueForPeriodForSingleIntegratedBalance(transactions, ticker, startingDate, endingDate))
+                .reduce(0.0, Double::sum);
+    }
+
+    private double getDepositValueForPeriodForSingleIntegratedBalance(ExchangerDepositWithdrawalTransactions transactions,
+                                                                      String ticker, LocalDateTime startingDate,
+                                                                      LocalDateTime endingDate) {
+        return transactions.getTransactions().stream()
                 .filter(transaction -> transaction.getTicker().equalsIgnoreCase(ticker) &&
                         transaction.getTransferTransactionType().equals(TransferTransactionType.DEPOSIT) &&
                         transaction.getCreatedAt().isAfter(startingDate) && transaction.getCreatedAt().isBefore(endingDate))
@@ -208,8 +215,8 @@ public class GoalsServiceImpl implements GoalsService {
 
         entity.setLeftToBuy(leftToBuy.compareTo(BigDecimal.ZERO) >= 0 ? goalQuantity.subtract(quantity) : BigDecimal.ZERO);
         entity.setDonePercentage(quantity
-                        .multiply(BigDecimal.valueOf(PERCENTAGE_SCALE))
-                        .divide(goalQuantity, 1, RoundingMode.DOWN));
+                .multiply(BigDecimal.valueOf(PERCENTAGE_SCALE))
+                .divide(goalQuantity, 1, RoundingMode.DOWN));
         entity.setFinished(quantity.compareTo(goalQuantity) >= 0);
     }
 

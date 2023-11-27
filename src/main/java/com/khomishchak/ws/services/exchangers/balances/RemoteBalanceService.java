@@ -6,6 +6,7 @@ import com.khomishchak.ws.repositories.BalanceRepository;
 import com.khomishchak.ws.services.UserService;
 import com.khomishchak.ws.services.exchangers.ExchangerConnectorService;
 import com.khomishchak.ws.services.exchangers.ExchangerConnectorServiceFactory;
+import com.khomishchak.ws.services.exchangers.balances.cache.BalanceCacheHandler;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -16,8 +17,9 @@ import java.util.List;
 public class RemoteBalanceService extends CommonBalanceService {
 
     public RemoteBalanceService(BalanceRepository balanceRepository,
-                                List<ExchangerConnectorServiceFactory> exchangerServiceFactories, UserService userService) {
-        super(balanceRepository, userService, exchangerServiceFactories);
+                                List<ExchangerConnectorServiceFactory> exchangerServiceFactories,
+                                UserService userService, BalanceCacheHandler balanceCacheHandler) {
+        super(balanceRepository, userService, exchangerServiceFactories, balanceCacheHandler);
     }
 
     @Override

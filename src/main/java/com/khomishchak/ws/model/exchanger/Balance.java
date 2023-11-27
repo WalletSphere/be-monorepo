@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.khomishchak.ws.model.User;
 import com.khomishchak.ws.model.enums.ExchangerCode;
 
+import com.khomishchak.ws.model.exchanger.transaction.ExchangerDepositWithdrawalTransactions;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,6 +18,7 @@ import jakarta.persistence.Id;
 
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -47,6 +50,10 @@ public class Balance {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private ExchangerDepositWithdrawalTransactions depositWithdrawalTransactions;
 
     @ElementCollection
     private List<Currency> currencies;

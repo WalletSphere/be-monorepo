@@ -5,6 +5,7 @@ import com.khomishchak.ws.model.exchanger.Balance;
 import com.khomishchak.ws.repositories.BalanceRepository;
 import com.khomishchak.ws.services.UserService;
 import com.khomishchak.ws.services.exchangers.ExchangerConnectorServiceFactory;
+import com.khomishchak.ws.services.exchangers.balances.cache.BalanceCacheHandler;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -18,8 +19,9 @@ public class LocalBalanceService extends CommonBalanceService {
     private final BalanceRepository balanceRepository;
 
     public LocalBalanceService(BalanceRepository balanceRepository, UserService userService,
-                               List<ExchangerConnectorServiceFactory> exchangerServiceFactories) {
-        super(balanceRepository, userService, exchangerServiceFactories);
+                               List<ExchangerConnectorServiceFactory> exchangerServiceFactories,
+                               BalanceCacheHandler balanceCacheHandler) {
+        super(balanceRepository, userService, exchangerServiceFactories, balanceCacheHandler);
         this.balanceRepository = balanceRepository;
     }
 

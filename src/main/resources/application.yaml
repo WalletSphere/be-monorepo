@@ -16,3 +16,9 @@ ws:
   balance:
     service:
       type: "local"
+  account:
+    balance:
+      operations:
+        history:
+          service:
+            type: "remote"

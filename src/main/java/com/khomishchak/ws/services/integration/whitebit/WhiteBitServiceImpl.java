@@ -1,12 +1,15 @@
 package com.khomishchak.ws.services.integration.whitebit;
 
 import com.khomishchak.ws.adapters.ApiKeySettingRepositoryAdapter;
-import com.khomishchak.ws.model.DepositWithdrawalTransaction;
+import com.khomishchak.ws.exceptions.BalanceNotFoundException;
+import com.khomishchak.ws.model.exchanger.transaction.DepositWithdrawalTransaction;
 import com.khomishchak.ws.model.enums.ExchangerCode;
 import com.khomishchak.ws.model.exchanger.Balance;
 import com.khomishchak.ws.model.exchanger.Currency;
 import com.khomishchak.ws.model.exchanger.DecryptedApiKeySettingDTO;
+import com.khomishchak.ws.model.exchanger.transaction.ExchangerDepositWithdrawalTransactions;
 import com.khomishchak.ws.repositories.BalanceRepository;
+import com.khomishchak.ws.repositories.DepositWithdrawalTransactionsHistoryRepository;
 import com.khomishchak.ws.services.integration.whitebit.exceptions.WhiteBitClientException;
 import com.khomishchak.ws.services.integration.whitebit.exceptions.WhiteBitServerException;
 import com.khomishchak.ws.services.integration.whitebit.mappers.WhiteBitResponseMapper;
@@ -36,6 +39,7 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Formatter;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class WhiteBitServiceImpl implements WhiteBitService {
@@ -50,24 +54,25 @@ public class WhiteBitServiceImpl implements WhiteBitService {
     private static final ExchangerCode CODE = ExchangerCode.WHITE_BIT;
 
     private final ApiKeySettingRepositoryAdapter apiKeySettingRepositoryAdapter;
-    // TODO: worth to add a new service layer in order to remove direct interaction with repository
     private final BalanceRepository balanceRepository;
     private final WebClient webClient;
     private final int retryMaxAttempts;
     private final Duration retryMinBackoff;
     private final WhiteBitResponseMapper responseMapper;
+    private final DepositWithdrawalTransactionsHistoryRepository depositWithdrawalTransactionsHistoryRepository;
 
     public WhiteBitServiceImpl(BalanceRepository balanceRepository,
             @Qualifier("WhiteBitApiWebClient") WebClient webClient, ApiKeySettingRepositoryAdapter apiKeySettingRepositoryAdapter,
             @Value("${ws.integration.exchanger.api.retry.maxAttempts:2}") int retryMaxAttempts,
             @Value("${ws.integration.exchanger.api.retry.minBackoffSeconds:2}") int retryMinBackoffSeconds,
-            WhiteBitResponseMapper responseMapper) {
+                               WhiteBitResponseMapper responseMapper, DepositWithdrawalTransactionsHistoryRepository depositWithdrawalTransactionsHistoryRepository) {
         this.apiKeySettingRepositoryAdapter = apiKeySettingRepositoryAdapter;
         this.balanceRepository = balanceRepository;
         this.webClient = webClient;
         this.retryMaxAttempts = retryMaxAttempts;
         this.retryMinBackoff = Duration.ofSeconds(retryMinBackoffSeconds);
         this.responseMapper = responseMapper;
+        this.depositWithdrawalTransactionsHistoryRepository = depositWithdrawalTransactionsHistoryRepository;
     }
 
     @Override
@@ -93,7 +98,7 @@ public class WhiteBitServiceImpl implements WhiteBitService {
     }
 
     @Override
-    public List<DepositWithdrawalTransaction> getDepositWithdrawalHistory(long userId) {
+    public ExchangerDepositWithdrawalTransactions getDepositWithdrawalHistory(long userId) {
         DecryptedApiKeySettingDTO keysPair = getApiKeysPair(userId);
         String apiKey = keysPair.getPublicKey();
         validateApiKey(apiKey);
@@ -108,7 +113,42 @@ public class WhiteBitServiceImpl implements WhiteBitService {
                 makeWebPostRequest(GET_MAIN_BALANCE_DEPOSIT_WITHDRAWAL_HISTORY_URL, requestJson, keysPair,
                         WhiteBitDepositWithdrawalHistoryResp.class);
 
-        return responseMapper.mapWithdrawalDepositHistoryToTransactions(response);
+        return generateDepositWithdrawalHistoryResp(response, userId);
+    }
+
+    private ExchangerDepositWithdrawalTransactions generateDepositWithdrawalHistoryResp(WhiteBitDepositWithdrawalHistoryResp response,
+                                                                                        long userId) {
+        List<DepositWithdrawalTransaction> transactions = responseMapper.mapWithdrawalDepositHistoryToTransactions(response);
+        Balance balance = balanceRepository.findByCodeAndUser_Id(CODE, userId)
+                .orElseThrow(() -> new BalanceNotFoundException(String.format("Balance for userId: %d and with code: %s was not found", userId, CODE)));
+
+        ExchangerDepositWithdrawalTransactions exchangerTransactions = getExchangerDepositWithdrawalTransactions(balance);
+        assigneeTransactionsToExchangerTransactionsEntity(transactions, exchangerTransactions);
+        balance.setDepositWithdrawalTransactions(exchangerTransactions);
+
+        return exchangerTransactions;
+    }
+
+    private ExchangerDepositWithdrawalTransactions getExchangerDepositWithdrawalTransactions (Balance balance) {
+        Optional<ExchangerDepositWithdrawalTransactions> byBalanceId =
+                depositWithdrawalTransactionsHistoryRepository.findByBalance_Id(balance.getId());
+
+        return byBalanceId.orElseGet(() -> getNewExchangerDepositWithdrawalTransactions(balance));
+    }
+
+    private ExchangerDepositWithdrawalTransactions getNewExchangerDepositWithdrawalTransactions(Balance balance) {
+        return ExchangerDepositWithdrawalTransactions.builder()
+                .code(CODE)
+                .userId(balance.getUserId())
+                .balance(balance)
+                .build();
+    }
+
+    private void assigneeTransactionsToExchangerTransactionsEntity(List<DepositWithdrawalTransaction> transactions,
+                                                                   ExchangerDepositWithdrawalTransactions exchangerTransactions) {
+
+        transactions.forEach(transaction -> transaction.setExchangerDepositWithdrawalTransactions(exchangerTransactions));
+        exchangerTransactions.setTransactions(transactions);
     }
 
     private <T> T makeWebPostRequest(String uri, String requestJson, DecryptedApiKeySettingDTO keysPair, Class<T> responseType) {
@@ -155,6 +195,7 @@ public class WhiteBitServiceImpl implements WhiteBitService {
                 });
     }
 
+    // TODO: should be able to return multiple keySettings for the same code but with different balance names
     private DecryptedApiKeySettingDTO getApiKeysPair(long userId) {
         List<DecryptedApiKeySettingDTO> apiKeys = apiKeySettingRepositoryAdapter.findAllByUserId(userId);
 
