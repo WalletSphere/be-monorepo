@@ -2,7 +2,6 @@ package com.khomishchak.ws.model.goals;
 
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Transient;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

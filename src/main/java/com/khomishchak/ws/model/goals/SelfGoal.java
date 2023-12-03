@@ -2,8 +2,6 @@ package com.khomishchak.ws.model.goals;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.khomishchak.ws.model.User;
-import com.khomishchak.ws.model.enums.GoalType;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -15,7 +13,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;

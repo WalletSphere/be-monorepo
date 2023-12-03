@@ -1,10 +1,8 @@
 package com.khomishchak.ws.model.exchanger;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.khomishchak.ws.model.User;
 import com.khomishchak.ws.model.enums.ExchangerCode;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -13,9 +11,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -36,6 +35,10 @@ public class ApiKeySetting {
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JsonIgnore
     private User user;
+
+    @OneToOne
+    @JoinColumn(name = "balance_id")
+    private Balance balance;
 
     @Enumerated(value = EnumType.STRING)
     private ExchangerCode code;

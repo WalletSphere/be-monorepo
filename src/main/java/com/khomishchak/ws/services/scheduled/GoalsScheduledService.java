@@ -1,6 +1,6 @@
 package com.khomishchak.ws.services.scheduled;
 
-import com.khomishchak.ws.model.enums.GoalType;
+import com.khomishchak.ws.model.goals.GoalType;
 import com.khomishchak.ws.model.goals.SelfGoal;
 import com.khomishchak.ws.repositories.SelfGoalRepository;
 import com.khomishchak.ws.services.GoalsService;
@@ -24,22 +24,31 @@ public class GoalsScheduledService implements ScheduledService {
     @Scheduled(cron = "0 0 0 * * ?")
     public void doAtTheStartOfTheDay() {
         List<SelfGoal> overdueGoals = goalRepository.getAllOverdueGoals();
+        closeOverdueAndCreateNewGoals(overdueGoals);
+    }
 
-        overdueGoals.forEach(oldGoal -> {
-            GoalType goalType = oldGoal.getGoalType();
-            SelfGoal newGoal = SelfGoal.builder()
-                    .ticker(oldGoal.getTicker())
-                    .user(oldGoal.getUser())
-                    .goalAmount(oldGoal.getGoalAmount())
-                    .goalType(goalType)
-                    .startDate(goalType.getStartTime(1))
-                    .endDate(goalType.getEndTime())
-                    .build();
-
-            oldGoal.setAchieved(goalsService.overdueGoalIsAchieved(oldGoal));
-            oldGoal.setClosed(true);
-
-            goalRepository.saveAll(List.of(oldGoal, newGoal));
+    private void closeOverdueAndCreateNewGoals(List<SelfGoal> overdueGoals) {
+        overdueGoals.forEach(overdueGoal -> {
+            closeOverdueGoal(overdueGoal);
+            SelfGoal newGoal = createNewFromOverdueGoal(overdueGoal);
+            goalRepository.saveAll(List.of(overdueGoal, newGoal));
         });
+    }
+
+    private void closeOverdueGoal(SelfGoal overdueGoal) {
+        overdueGoal.setAchieved(goalsService.overdueGoalIsAchieved(overdueGoal));
+        overdueGoal.setClosed(true);
+    }
+
+    private SelfGoal createNewFromOverdueGoal(SelfGoal overdueGoal) {
+        GoalType goalType = overdueGoal.getGoalType();
+        return SelfGoal.builder()
+                .ticker(overdueGoal.getTicker())
+                .user(overdueGoal.getUser())
+                .goalAmount(overdueGoal.getGoalAmount())
+                .goalType(goalType)
+                .startDate(goalType.getStartTime(1))
+                .endDate(goalType.getEndTime())
+                .build();
     }
 }

@@ -5,7 +5,6 @@ import com.khomishchak.ws.model.exchanger.ApiKeySetting;
 import com.khomishchak.ws.model.exchanger.Balance;
 import com.khomishchak.ws.model.goals.CryptoGoalsTable;
 import com.khomishchak.ws.model.goals.SelfGoal;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,7 +17,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -28,7 +26,6 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -72,5 +69,5 @@ public class User {
     private List<SelfGoal> selfGoals;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private List<Feedback> feedbacks = new ArrayList<>();
+    private List<Feedback> feedbacks;
 }

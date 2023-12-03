@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -47,6 +48,7 @@ class FeedbackServiceImplTest {
         // given
         testUser = new User();
         testUser.setId(USER_ID);
+        testUser.setFeedbacks(new ArrayList<>());
 
         Feedback createdFeedback = new Feedback();
         createdFeedback.setId(FEEDBACK_ID);

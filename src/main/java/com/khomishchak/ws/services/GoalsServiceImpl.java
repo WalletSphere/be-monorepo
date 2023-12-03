@@ -1,17 +1,22 @@
 package com.khomishchak.ws.services;
 
 import com.khomishchak.ws.exceptions.GoalsTableNotFoundException;
-import com.khomishchak.ws.model.exchanger.transaction.ExchangerDepositWithdrawalTransactions;
-import com.khomishchak.ws.model.exchanger.transaction.Transaction;
 import com.khomishchak.ws.model.TransactionType;
 import com.khomishchak.ws.model.TransferTransactionType;
 import com.khomishchak.ws.model.User;
-import com.khomishchak.ws.model.enums.GoalType;
-import com.khomishchak.ws.model.exchanger.Balance;
-import com.khomishchak.ws.model.goals.*;
+import com.khomishchak.ws.model.exchanger.transaction.ExchangerDepositWithdrawalTransactions;
+import com.khomishchak.ws.model.exchanger.transaction.Transaction;
+import com.khomishchak.ws.model.goals.CommonGoalType;
+import com.khomishchak.ws.model.goals.CryptoGoalTableTransaction;
+import com.khomishchak.ws.model.goals.CryptoGoalsTable;
+import com.khomishchak.ws.model.goals.CryptoGoalsTableRecord;
+import com.khomishchak.ws.model.goals.GoalType;
+import com.khomishchak.ws.model.goals.SelfGoal;
+import com.khomishchak.ws.model.goals.TransactionChangeStateDTO;
 import com.khomishchak.ws.repositories.CryptoGoalsTableRepository;
 import com.khomishchak.ws.repositories.SelfGoalRepository;
 import com.khomishchak.ws.services.exchangers.ExchangerService;
+import com.khomishchak.ws.services.goal.SelfGoalValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,24 +24,29 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class GoalsServiceImpl implements GoalsService {
 
-    public static final int END_OF_PREVIOUS_PERIOD = 2;
-    public static final int END_OF_CURRENT_PERIOD = 1;
     public static final int PERCENTAGE_SCALE = 100;
     private final CryptoGoalsTableRepository cryptoGoalsTableRepository;
     private final UserService userService;
     private final SelfGoalRepository selfGoalRepository;
     private final ExchangerService exchangerService;
 
+    private final Map<CommonGoalType, SelfGoalValidator> selfGoalValidators;
+
     public GoalsServiceImpl(CryptoGoalsTableRepository cryptoGoalsTableRepository, UserService userService,
-                            SelfGoalRepository selfGoalRepository, ExchangerService exchangerService) {
+                            SelfGoalRepository selfGoalRepository, ExchangerService exchangerService,
+                            List<SelfGoalValidator> selfGoalValidators) {
         this.cryptoGoalsTableRepository = cryptoGoalsTableRepository;
         this.userService = userService;
         this.selfGoalRepository = selfGoalRepository;
         this.exchangerService = exchangerService;
+        this.selfGoalValidators = selfGoalValidators.stream()
+                .collect(Collectors.toMap(SelfGoalValidator::getCommonGoalType, validator -> validator));
     }
 
     @Override
@@ -56,18 +66,6 @@ public class GoalsServiceImpl implements GoalsService {
 
     @Override
     public CryptoGoalsTable updateCryptoGoalsTable(CryptoGoalsTable cryptoGoalsTable) {
-        CryptoGoalsTable cryptoGoalsTableEn = getCryptoGoalsTable(cryptoGoalsTable.getId());
-
-        cryptoGoalsTable.getTableRecords().forEach(r -> {
-            cryptoGoalsTableEn.getTableRecords().forEach(rEn -> {
-                if (r.getName().equals(rEn.getName())) {
-                    rEn.setGoalQuantity(r.getGoalQuantity());
-                    rEn.setQuantity(r.getQuantity());
-                    rEn.setAverageCost(r.getAverageCost());
-                }
-            });
-        });
-
         return saveCryptoTable(cryptoGoalsTable);
     }
 
@@ -140,11 +138,10 @@ public class GoalsServiceImpl implements GoalsService {
 
     @Override
     public List<SelfGoal> getSelfGoals(Long userId) {
-
         List<SelfGoal> result = selfGoalRepository.findAllByUserId(userId);
 
         result.forEach(goal -> {
-            goal.setCurrentAmount(getDepositValueForPeriod(userService.getUserById(userId), goal.getTicker(), goal.getStartDate(), goal.getEndDate()));
+            goal.setCurrentAmount(getDepositValueForPeriod(userId, goal.getTicker(), goal.getStartDate(), goal.getEndDate()));
             goal.setAchieved(goal.getCurrentAmount() > goal.getGoalAmount());
         });
         return result;
@@ -157,11 +154,12 @@ public class GoalsServiceImpl implements GoalsService {
         user.setSelfGoals(goals);
 
         goals.forEach(g -> {
+            GoalType goalType = g.getGoalType();
             g.setUser(user);
-            g.setStartDate(LocalDateTime.now());
-            g.setEndDate(g.getGoalType().getEndTime());
+            g.setStartDate(goalType.getStartTime(1));
+            g.setEndDate(goalType.getEndTime());
             g.setAchieved(g.getCurrentAmount() > g.getGoalAmount());
-            g.setCurrentAmount(getDepositValueForPeriod(user, g.getTicker(), g.getStartDate(), g.getEndDate()));
+            g.setCurrentAmount(getDepositValueForPeriod(userId, g.getTicker(), g.getStartDate(), g.getEndDate()));
         });
 
         userService.saveUser(user);
@@ -169,28 +167,13 @@ public class GoalsServiceImpl implements GoalsService {
         return goals;
     }
 
-    // TODO: should be replaced with strategy pattern to handle multiple goal types, not only deposit
     @Override
     public boolean overdueGoalIsAchieved(SelfGoal goal) {
-        GoalType goalType = goal.getGoalType();
-        double depositValue = getDepositValueForPeriod(goal.getUser(), goal.getTicker(),
-                goalType.getStartTime(END_OF_PREVIOUS_PERIOD), goalType.getStartTime(END_OF_CURRENT_PERIOD));
-
-        goal.setCurrentAmount(depositValue);
-        goal.setAchieved(depositValue > goal.getGoalAmount());
-        return selfGoalRepository.save(goal).isAchieved();
-    }
-
-    private double getDepositValueForPeriod(User user, String ticker, LocalDateTime startingData, LocalDateTime endingDate) {
-        return user.getBalances().stream()
-                .map(Balance::getCode)
-                .map(c -> getDepositValueForPeriod(user.getId(), ticker, startingData, endingDate))
-                .reduce(0.0, Double::sum);
+        return selfGoalValidators.get(goal.getGoalType().getCommonType()).isAchieved(goal);
     }
 
     private double getDepositValueForPeriod(long userId, String ticker, LocalDateTime startingDate,
                                             LocalDateTime endingDate) {
-
         return exchangerService.getWithdrawalDepositWalletHistory(userId).stream()
                 .map(transactions -> getDepositValueForPeriodForSingleIntegratedBalance(transactions, ticker, startingDate, endingDate))
                 .reduce(0.0, Double::sum);

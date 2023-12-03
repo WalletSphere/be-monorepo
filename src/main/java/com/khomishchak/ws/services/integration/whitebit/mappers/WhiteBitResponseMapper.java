@@ -1,8 +1,8 @@
 package com.khomishchak.ws.services.integration.whitebit.mappers;
 
-import com.khomishchak.ws.model.exchanger.transaction.DepositWithdrawalTransaction;
 import com.khomishchak.ws.model.TransferTransactionType;
 import com.khomishchak.ws.model.exchanger.Currency;
+import com.khomishchak.ws.model.exchanger.transaction.DepositWithdrawalTransaction;
 import com.khomishchak.ws.services.integration.whitebit.model.WhiteBitBalanceResp;
 import com.khomishchak.ws.services.integration.whitebit.model.WhiteBitDepositWithdrawalHistoryResp;
 import org.springframework.stereotype.Component;

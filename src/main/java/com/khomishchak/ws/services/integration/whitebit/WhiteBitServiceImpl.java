@@ -2,11 +2,11 @@ package com.khomishchak.ws.services.integration.whitebit;
 
 import com.khomishchak.ws.adapters.ApiKeySettingRepositoryAdapter;
 import com.khomishchak.ws.exceptions.BalanceNotFoundException;
-import com.khomishchak.ws.model.exchanger.transaction.DepositWithdrawalTransaction;
 import com.khomishchak.ws.model.enums.ExchangerCode;
 import com.khomishchak.ws.model.exchanger.Balance;
 import com.khomishchak.ws.model.exchanger.Currency;
 import com.khomishchak.ws.model.exchanger.DecryptedApiKeySettingDTO;
+import com.khomishchak.ws.model.exchanger.transaction.DepositWithdrawalTransaction;
 import com.khomishchak.ws.model.exchanger.transaction.ExchangerDepositWithdrawalTransactions;
 import com.khomishchak.ws.repositories.BalanceRepository;
 import com.khomishchak.ws.repositories.DepositWithdrawalTransactionsHistoryRepository;
@@ -44,9 +44,10 @@ import java.util.Optional;
 @Service
 public class WhiteBitServiceImpl implements WhiteBitService {
 
-    public static final String GET_MAIN_BALANCE_URL = "/api/v4/main-account/balance";
-    public static final String GET_MAIN_BALANCE_DEPOSIT_WITHDRAWAL_HISTORY_URL = "/api/v4/main-account/history";
-    public static final String BASE_URL = "https://whitebit.com";
+    private String getMainBalanceUrl;
+    private String baseUrl;
+
+    private String getMainBalanceDepositWithdrawalHistoryUrl;
 
     private static final String WHITE_BIT_SERVER_ERROR_MESSAGE = "Failed to get response from WhiteBit, server error";
     private static final String WHITE_BIT_CLIENT_ERROR_MESSAGE = "Failed to get response from WhiteBit, client error";
@@ -75,6 +76,21 @@ public class WhiteBitServiceImpl implements WhiteBitService {
         this.depositWithdrawalTransactionsHistoryRepository = depositWithdrawalTransactionsHistoryRepository;
     }
 
+    @Value("ws.integration.white-bit.base-url")
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
+
+    @Value("ws.integration.white-bit.get-deposit-withdraw-history")
+    public void setGetMainBalanceDepositWithdrawalHistoryUrl(String getMainBalanceDepositWithdrawalHistoryUrl) {
+        this.getMainBalanceDepositWithdrawalHistoryUrl = getMainBalanceDepositWithdrawalHistoryUrl;
+    }
+
+    @Value("ws.integration.white-bit.get-main-balance-url")
+    public void setGetMainBalanceUrl(String getMainBalanceUrl) {
+        this.getMainBalanceUrl = getMainBalanceUrl;
+    }
+
     @Override
     public Balance getAccountBalance(long userId) {
         DecryptedApiKeySettingDTO decryptedKeysPair = getApiKeysPair(userId);
@@ -83,11 +99,11 @@ public class WhiteBitServiceImpl implements WhiteBitService {
 
         // TODO: create POJO
         String requestJson = String.format("{\"request\":\"%1$s\",\"nonce\":\"%2$s\",\"nonceWindow\":false}",
-                GET_MAIN_BALANCE_URL,
+                getMainBalanceUrl,
                 System.currentTimeMillis());
 
         WhiteBitBalanceResp response =
-                makeWebPostRequest(GET_MAIN_BALANCE_URL, requestJson, decryptedKeysPair, WhiteBitBalanceResp.class);
+                makeWebPostRequest(getMainBalanceUrl, requestJson, decryptedKeysPair, WhiteBitBalanceResp.class);
         List<Currency> availableCurrencies = responseMapper.mapToCurrencies(response);
 
         //TODO: new service layer
@@ -106,11 +122,11 @@ public class WhiteBitServiceImpl implements WhiteBitService {
         // TODO: create POJO
         String requestJson = String.format(
                 "{\"offset\":%1$d,\"limit\":%2$d,\"request\":\"%3$s\",\"nonce\":\"%4$s\"}",
-                0, 100, GET_MAIN_BALANCE_DEPOSIT_WITHDRAWAL_HISTORY_URL, System.currentTimeMillis()
+                0, 100, getMainBalanceDepositWithdrawalHistoryUrl, System.currentTimeMillis()
         );
 
         WhiteBitDepositWithdrawalHistoryResp response =
-                makeWebPostRequest(GET_MAIN_BALANCE_DEPOSIT_WITHDRAWAL_HISTORY_URL, requestJson, keysPair,
+                makeWebPostRequest(getMainBalanceDepositWithdrawalHistoryUrl, requestJson, keysPair,
                         WhiteBitDepositWithdrawalHistoryResp.class);
 
         return generateDepositWithdrawalHistoryResp(response, userId);
@@ -146,7 +162,6 @@ public class WhiteBitServiceImpl implements WhiteBitService {
 
     private void assigneeTransactionsToExchangerTransactionsEntity(List<DepositWithdrawalTransaction> transactions,
                                                                    ExchangerDepositWithdrawalTransactions exchangerTransactions) {
-
         transactions.forEach(transaction -> transaction.setExchangerDepositWithdrawalTransactions(exchangerTransactions));
         exchangerTransactions.setTransactions(transactions);
     }
@@ -160,7 +175,7 @@ public class WhiteBitServiceImpl implements WhiteBitService {
             throw new RuntimeException(e);
         }
 
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(BASE_URL + uri);
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(baseUrl + uri);
 
         return webClient.post()
                 .uri(uriBuilder.build().toUri())
@@ -190,7 +205,7 @@ public class WhiteBitServiceImpl implements WhiteBitService {
                     if (statusCode >= 400 && statusCode < 500) {
                         return Mono.error(new WhiteBitClientException(String.format("%s: %s", WHITE_BIT_CLIENT_ERROR_MESSAGE, errorMessage), statusCode));
                     } else {
-                        return Mono.error(new WhiteBitServerException(errorMessage));
+                        return resp.createException().flatMap(Mono::error);
                     }
                 });
     }

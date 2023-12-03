@@ -88,7 +88,6 @@ public class UserServiceImpl implements UserService {
     }
 
     private RegistrationResult getRegistrationResult(User createdUser, DeviceType registrationDeviceType) {
-
         return new RegistrationResult(createdUser.getUsername(), createdUser.getEmail(),
                 createdUser.getUserRole(), generateJwtToken(createdUser, registrationDeviceType));
     }

@@ -1,4 +1,4 @@
-package com.khomishchak.ws.model.enums;
+package com.khomishchak.ws.model.goals;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,6 +16,11 @@ public enum GoalType {
         public LocalDateTime getStartTime(int amountOfDaysAgo) {
             return getEndTime().minusDays(amountOfDaysAgo);
         }
+
+        @Override
+        public CommonGoalType getCommonType() {
+            return CommonGoalType.DEPOSIT_GOAL;
+        }
     },
     WEEKLY_DEPOSIT_GOAL {
         @Override
@@ -26,6 +31,11 @@ public enum GoalType {
         @Override
         public LocalDateTime getStartTime(int amountOfWeeksAgo) {
             return getEndTime().minusDays(7L * amountOfWeeksAgo);
+        }
+
+        @Override
+        public CommonGoalType getCommonType() {
+            return CommonGoalType.DEPOSIT_GOAL;
         }
     },
     MONTHLY_DEPOSIT_GOAL {
@@ -38,10 +48,17 @@ public enum GoalType {
         public LocalDateTime getStartTime(int amountOfMonthsAgo) {
             return getEndTime().minusMonths(amountOfMonthsAgo);
         }
+
+        @Override
+        public CommonGoalType getCommonType() {
+            return CommonGoalType.DEPOSIT_GOAL;
+        }
     };
 
     public abstract LocalDateTime getEndTime();
 
     // 1 - start time of current goal; 2 - start time of previous goal
     public abstract LocalDateTime getStartTime(int amountOfPeriodsAgo);
+
+    public abstract CommonGoalType getCommonType();
 }

@@ -1,8 +1,8 @@
 package com.khomishchak.ws.model.exchanger.transaction;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.khomishchak.ws.model.exchanger.Balance;
 import com.khomishchak.ws.model.enums.ExchangerCode;
+import com.khomishchak.ws.model.exchanger.Balance;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
