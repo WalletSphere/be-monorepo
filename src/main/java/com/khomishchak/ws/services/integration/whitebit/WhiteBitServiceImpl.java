@@ -76,17 +76,17 @@ public class WhiteBitServiceImpl implements WhiteBitService {
         this.depositWithdrawalTransactionsHistoryRepository = depositWithdrawalTransactionsHistoryRepository;
     }
 
-    @Value("ws.integration.white-bit.base-url")
+    @Value("${ws.integration.exchanger.white-bit.base-url}")
     public void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
     }
 
-    @Value("ws.integration.white-bit.get-deposit-withdraw-history")
+    @Value("${ws.integration.exchanger.white-bit.get-deposit-withdraw-history}")
     public void setGetMainBalanceDepositWithdrawalHistoryUrl(String getMainBalanceDepositWithdrawalHistoryUrl) {
         this.getMainBalanceDepositWithdrawalHistoryUrl = getMainBalanceDepositWithdrawalHistoryUrl;
     }
 
-    @Value("ws.integration.white-bit.get-main-balance-url")
+    @Value("${ws.integration.exchanger.white-bit.get-main-balance-url}")
     public void setGetMainBalanceUrl(String getMainBalanceUrl) {
         this.getMainBalanceUrl = getMainBalanceUrl;
     }
