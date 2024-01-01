@@ -1,5 +1,6 @@
 package com.khomishchak.ws.model.exchanger;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.khomishchak.ws.model.User;
@@ -42,6 +43,7 @@ public class Balance {
 
     private String balanceName;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime lastTimeWasUpdated;
 
     @Enumerated(value = EnumType.STRING)

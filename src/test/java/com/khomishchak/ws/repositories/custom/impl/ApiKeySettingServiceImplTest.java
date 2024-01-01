@@ -1,4 +1,4 @@
-package com.khomishchak.ws.adapters;
+package com.khomishchak.ws.repositories.custom.impl;
 
 import com.khomishchak.ws.model.User;
 import com.khomishchak.ws.model.enums.ExchangerCode;
@@ -6,6 +6,8 @@ import com.khomishchak.ws.model.exchanger.ApiKeySetting;
 import com.khomishchak.ws.model.exchanger.ApiKeysPair;
 import com.khomishchak.ws.model.exchanger.DecryptedApiKeySettingDTO;
 import com.khomishchak.ws.repositories.ApiKeySettingRepository;
+import com.khomishchak.ws.services.exchangers.apikeys.ApiKeySettingService;
+import com.khomishchak.ws.services.exchangers.apikeys.ApiKeySettingServiceImpl;
 import com.khomishchak.ws.services.security.encryption.AesEncryptionService;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
-class ApiKeySettingRepositoryAdapterTest {
+class ApiKeySettingServiceImplTest {
 
     private static final long USER_ID = 1L;
     private static final String ENCRYPTED_PUB_KEY = "encryptedPubKey";
@@ -32,7 +34,7 @@ class ApiKeySettingRepositoryAdapterTest {
     @Mock
     private AesEncryptionService aesEncryptionService;
 
-    private ApiKeySettingRepositoryAdapter apiKeySettingRepositoryAdapter;
+    private ApiKeySettingService apiKeySettingService;
 
     private User testUser;
 
@@ -41,7 +43,7 @@ class ApiKeySettingRepositoryAdapterTest {
         testUser = User.builder()
                 .id(USER_ID)
                 .build();
-        apiKeySettingRepositoryAdapter = new ApiKeySettingRepositoryAdapter(apiKeySettingRepository, aesEncryptionService);
+        apiKeySettingService = new ApiKeySettingServiceImpl(apiKeySettingRepository, aesEncryptionService);
     }
 
     @Test
@@ -59,7 +61,7 @@ class ApiKeySettingRepositoryAdapterTest {
         when(aesEncryptionService.decrypt(eq(ENCRYPTED_PRI_KEY))).thenReturn(DECRYPTED_PRI_KEY);
 
         // when
-        List<DecryptedApiKeySettingDTO> result = apiKeySettingRepositoryAdapter.findAllByUserId(USER_ID);
+        List<DecryptedApiKeySettingDTO> result = apiKeySettingService.getDecryptApiKeySettings(USER_ID);
 
         // then
         assertThat(result.size()).isEqualTo(1);

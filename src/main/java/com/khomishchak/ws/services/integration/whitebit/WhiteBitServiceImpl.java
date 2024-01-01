@@ -1,20 +1,15 @@
 package com.khomishchak.ws.services.integration.whitebit;
 
-import com.khomishchak.ws.adapters.ApiKeySettingRepositoryAdapter;
-import com.khomishchak.ws.exceptions.BalanceNotFoundException;
 import com.khomishchak.ws.model.enums.ExchangerCode;
-import com.khomishchak.ws.model.exchanger.Balance;
-import com.khomishchak.ws.model.exchanger.Currency;
 import com.khomishchak.ws.model.exchanger.DecryptedApiKeySettingDTO;
-import com.khomishchak.ws.model.exchanger.transaction.DepositWithdrawalTransaction;
-import com.khomishchak.ws.model.exchanger.transaction.ExchangerDepositWithdrawalTransactions;
-import com.khomishchak.ws.repositories.BalanceRepository;
-import com.khomishchak.ws.repositories.DepositWithdrawalTransactionsHistoryRepository;
+import com.khomishchak.ws.repositories.ApiKeySettingRepository;
+import com.khomishchak.ws.services.exchangers.apikeys.ApiKeySettingService;
 import com.khomishchak.ws.services.integration.whitebit.exceptions.WhiteBitClientException;
 import com.khomishchak.ws.services.integration.whitebit.exceptions.WhiteBitServerException;
-import com.khomishchak.ws.services.integration.whitebit.mappers.WhiteBitResponseMapper;
+import com.khomishchak.ws.services.integration.whitebit.mappers.WhiteBitErrorResponseMapper;
 import com.khomishchak.ws.services.integration.whitebit.model.WhiteBitBalanceResp;
 import com.khomishchak.ws.services.integration.whitebit.model.WhiteBitDepositWithdrawalHistoryResp;
+import com.khomishchak.ws.services.integration.whitebit.model.WhiteBitV4ErrorResp;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutException;
 import io.netty.handler.timeout.WriteTimeoutException;
@@ -35,11 +30,10 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Formatter;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class WhiteBitServiceImpl implements WhiteBitService {
@@ -50,30 +44,23 @@ public class WhiteBitServiceImpl implements WhiteBitService {
     private String getMainBalanceDepositWithdrawalHistoryUrl;
 
     private static final String WHITE_BIT_SERVER_ERROR_MESSAGE = "Failed to get response from WhiteBit, server error";
-    private static final String WHITE_BIT_CLIENT_ERROR_MESSAGE = "Failed to get response from WhiteBit, client error";
-
     private static final ExchangerCode CODE = ExchangerCode.WHITE_BIT;
-
-    private final ApiKeySettingRepositoryAdapter apiKeySettingRepositoryAdapter;
-    private final BalanceRepository balanceRepository;
+    private final WhiteBitErrorResponseMapper errorResponseMapper;
+    private final ApiKeySettingService apiKeySettingService;
     private final WebClient webClient;
     private final int retryMaxAttempts;
     private final Duration retryMinBackoff;
-    private final WhiteBitResponseMapper responseMapper;
-    private final DepositWithdrawalTransactionsHistoryRepository depositWithdrawalTransactionsHistoryRepository;
 
-    public WhiteBitServiceImpl(BalanceRepository balanceRepository,
-            @Qualifier("WhiteBitApiWebClient") WebClient webClient, ApiKeySettingRepositoryAdapter apiKeySettingRepositoryAdapter,
+    public WhiteBitServiceImpl(@Qualifier("WhiteBitApiWebClient") WebClient webClient,
+                               WhiteBitErrorResponseMapper errorResponseMapper,
+                               ApiKeySettingService apiKeySettingService,
             @Value("${ws.integration.exchanger.api.retry.maxAttempts:2}") int retryMaxAttempts,
-            @Value("${ws.integration.exchanger.api.retry.minBackoffSeconds:2}") int retryMinBackoffSeconds,
-                               WhiteBitResponseMapper responseMapper, DepositWithdrawalTransactionsHistoryRepository depositWithdrawalTransactionsHistoryRepository) {
-        this.apiKeySettingRepositoryAdapter = apiKeySettingRepositoryAdapter;
-        this.balanceRepository = balanceRepository;
+            @Value("${ws.integration.exchanger.api.retry.minBackoffSeconds:2}") int retryMinBackoffSeconds) {
+        this.apiKeySettingService = apiKeySettingService;
         this.webClient = webClient;
         this.retryMaxAttempts = retryMaxAttempts;
         this.retryMinBackoff = Duration.ofSeconds(retryMinBackoffSeconds);
-        this.responseMapper = responseMapper;
-        this.depositWithdrawalTransactionsHistoryRepository = depositWithdrawalTransactionsHistoryRepository;
+        this.errorResponseMapper = errorResponseMapper;
     }
 
     @Value("${ws.integration.exchanger.white-bit.base-url}")
@@ -92,7 +79,7 @@ public class WhiteBitServiceImpl implements WhiteBitService {
     }
 
     @Override
-    public Balance getAccountBalance(long userId) {
+    public Mono<WhiteBitBalanceResp> getAccountBalance(long userId) {
         DecryptedApiKeySettingDTO decryptedKeysPair = getApiKeysPair(userId);
         String apiKey = decryptedKeysPair.getPublicKey();
         validateApiKey(apiKey);
@@ -102,19 +89,11 @@ public class WhiteBitServiceImpl implements WhiteBitService {
                 getMainBalanceUrl,
                 System.currentTimeMillis());
 
-        WhiteBitBalanceResp response =
-                makeWebPostRequest(getMainBalanceUrl, requestJson, decryptedKeysPair, WhiteBitBalanceResp.class);
-        List<Currency> availableCurrencies = responseMapper.mapToCurrencies(response);
-
-        //TODO: new service layer
-        Balance balance = balanceRepository.findByCodeAndUser_Id(CODE, userId).get();
-        balance.setCurrencies(availableCurrencies);
-        balance.setLastTimeWasUpdated(LocalDateTime.now());
-        return balance;
+        return makeWebPostRequest(getMainBalanceUrl, requestJson, decryptedKeysPair, WhiteBitBalanceResp.class);
     }
 
     @Override
-    public ExchangerDepositWithdrawalTransactions getDepositWithdrawalHistory(long userId) {
+    public Mono<WhiteBitDepositWithdrawalHistoryResp> getDepositWithdrawalHistory(long userId) {
         DecryptedApiKeySettingDTO keysPair = getApiKeysPair(userId);
         String apiKey = keysPair.getPublicKey();
         validateApiKey(apiKey);
@@ -125,55 +104,13 @@ public class WhiteBitServiceImpl implements WhiteBitService {
                 0, 100, getMainBalanceDepositWithdrawalHistoryUrl, System.currentTimeMillis()
         );
 
-        WhiteBitDepositWithdrawalHistoryResp response =
-                makeWebPostRequest(getMainBalanceDepositWithdrawalHistoryUrl, requestJson, keysPair,
+        return makeWebPostRequest(getMainBalanceDepositWithdrawalHistoryUrl, requestJson, keysPair,
                         WhiteBitDepositWithdrawalHistoryResp.class);
-
-        return generateDepositWithdrawalHistoryResp(response, userId);
     }
 
-    private ExchangerDepositWithdrawalTransactions generateDepositWithdrawalHistoryResp(WhiteBitDepositWithdrawalHistoryResp response,
-                                                                                        long userId) {
-        List<DepositWithdrawalTransaction> transactions = responseMapper.mapWithdrawalDepositHistoryToTransactions(response);
-        Balance balance = balanceRepository.findByCodeAndUser_Id(CODE, userId)
-                .orElseThrow(() -> new BalanceNotFoundException(String.format("Balance for userId: %d and with code: %s was not found", userId, CODE)));
-
-        ExchangerDepositWithdrawalTransactions exchangerTransactions = getExchangerDepositWithdrawalTransactions(balance);
-        assigneeTransactionsToExchangerTransactionsEntity(transactions, exchangerTransactions);
-        balance.setDepositWithdrawalTransactions(exchangerTransactions);
-
-        return exchangerTransactions;
-    }
-
-    private ExchangerDepositWithdrawalTransactions getExchangerDepositWithdrawalTransactions (Balance balance) {
-        Optional<ExchangerDepositWithdrawalTransactions> byBalanceId =
-                depositWithdrawalTransactionsHistoryRepository.findByBalance_Id(balance.getId());
-
-        return byBalanceId.orElseGet(() -> getNewExchangerDepositWithdrawalTransactions(balance));
-    }
-
-    private ExchangerDepositWithdrawalTransactions getNewExchangerDepositWithdrawalTransactions(Balance balance) {
-        return ExchangerDepositWithdrawalTransactions.builder()
-                .code(CODE)
-                .userId(balance.getUserId())
-                .balance(balance)
-                .build();
-    }
-
-    private void assigneeTransactionsToExchangerTransactionsEntity(List<DepositWithdrawalTransaction> transactions,
-                                                                   ExchangerDepositWithdrawalTransactions exchangerTransactions) {
-        transactions.forEach(transaction -> transaction.setExchangerDepositWithdrawalTransactions(exchangerTransactions));
-        exchangerTransactions.setTransactions(transactions);
-    }
-
-    private <T> T makeWebPostRequest(String uri, String requestJson, DecryptedApiKeySettingDTO keysPair, Class<T> responseType) {
+    private <T> Mono<T> makeWebPostRequest(String uri, String requestJson, DecryptedApiKeySettingDTO keysPair, Class<T> responseType) {
         String payload = Base64.getEncoder().encodeToString(requestJson.getBytes());
-        String signature;
-        try {
-            signature = calcSignature(payload, keysPair.getPrivateKey());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        String signature = calculateSignature(payload, keysPair);
 
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(baseUrl + uri);
 
@@ -195,15 +132,15 @@ public class WhiteBitServiceImpl implements WhiteBitService {
                 .retryWhen(Retry.backoff(retryMaxAttempts, retryMinBackoff)
                         .filter(e -> e instanceof WebClientResponseException || isTimeoutException(e))
                         .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) ->
-                                new WhiteBitServerException(WHITE_BIT_SERVER_ERROR_MESSAGE)))
-                .block();
+                                new WhiteBitServerException(WHITE_BIT_SERVER_ERROR_MESSAGE)));
     }
 
     private <T> Mono<T> handleErrorResponse(ClientResponse resp, int statusCode) {
         return resp.bodyToMono(String.class)
-                .flatMap(errorMessage -> {
+                .map(errorMessage -> errorResponseMapper.mapPlainTextErrorToObj(errorMessage, WhiteBitV4ErrorResp.class))
+                .flatMap(errorMessageResp -> {
                     if (statusCode >= 400 && statusCode < 500) {
-                        return Mono.error(new WhiteBitClientException(String.format("%s: %s", WHITE_BIT_CLIENT_ERROR_MESSAGE, errorMessage), statusCode));
+                        return getErrorResp(errorMessageResp, statusCode);
                     } else {
                         return resp.createException().flatMap(Mono::error);
                     }
@@ -212,13 +149,30 @@ public class WhiteBitServiceImpl implements WhiteBitService {
 
     // TODO: should be able to return multiple keySettings for the same code but with different balance names
     private DecryptedApiKeySettingDTO getApiKeysPair(long userId) {
-        List<DecryptedApiKeySettingDTO> apiKeys = apiKeySettingRepositoryAdapter.findAllByUserId(userId);
+        List<DecryptedApiKeySettingDTO> apiKeys = apiKeySettingService.getDecryptApiKeySettings(userId);
 
         return apiKeys.stream()
                 .filter(keys -> CODE.equals(keys.getCode()))
                 .findFirst()
                 .orElseThrow(
                         () -> new IllegalArgumentException(String.format("API Keys with for code: %s not present", CODE)));
+    }
+
+    private <T> Mono<T> getErrorResp(WhiteBitV4ErrorResp resp, int statusCode) {
+        return Mono.error(new WhiteBitClientException(resp.getCode(), resp.getErrorMessage(), getErrors(resp), statusCode));
+    }
+
+    private List<String> getErrors (WhiteBitV4ErrorResp resp) {
+        WhiteBitV4ErrorResp.Errors respErrors = resp.getErrors();
+        return respErrors != null ? respErrors.getMessages() : new ArrayList<>();
+    }
+
+    private String calculateSignature(String payload, DecryptedApiKeySettingDTO keysPair) {
+        try {
+            return calcSignature(payload, keysPair.getPrivateKey());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static String calcSignature(String data, String secretKey)
