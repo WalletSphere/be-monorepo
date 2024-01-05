@@ -2,6 +2,7 @@ package com.khomishchak.ws.services.exchangers;
 
 import com.khomishchak.ws.model.enums.ExchangerCode;
 import com.khomishchak.ws.model.exchanger.Balance;
+import com.khomishchak.ws.model.exchanger.ExchangerUniqueCurrenciesDTO;
 import com.khomishchak.ws.model.exchanger.transaction.ExchangerDepositWithdrawalTransactions;
 import com.khomishchak.ws.model.requests.RegisterExchangerInfoReq;
 import com.khomishchak.ws.model.response.FirstlyGeneratedBalanceResp;
@@ -25,4 +26,6 @@ public interface ExchangerService {
     SyncDepositWithdrawalTransactionsResp synchronizeDepositWithdrawalTransactionsData(long userId);
 
     void deleteExchangerForUser(long balanceId);
+
+    List<ExchangerUniqueCurrenciesDTO> getUsedCurrencies();
 }

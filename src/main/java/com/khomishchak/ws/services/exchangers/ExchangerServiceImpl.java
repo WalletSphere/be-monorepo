@@ -6,6 +6,7 @@ import com.khomishchak.ws.model.enums.RegistrationStatus;
 import com.khomishchak.ws.model.exchanger.ApiKeySetting;
 import com.khomishchak.ws.model.exchanger.ApiKeysPair;
 import com.khomishchak.ws.model.exchanger.Balance;
+import com.khomishchak.ws.model.exchanger.ExchangerUniqueCurrenciesDTO;
 import com.khomishchak.ws.model.exchanger.transaction.ExchangerDepositWithdrawalTransactions;
 import com.khomishchak.ws.model.requests.RegisterApiKeysReq;
 import com.khomishchak.ws.model.requests.RegisterExchangerInfoReq;
@@ -84,6 +85,11 @@ public class ExchangerServiceImpl implements ExchangerService {
     @Override
     public void deleteExchangerForUser(long balanceId) {
         balanceService.deleteBalance(balanceId);
+    }
+
+    @Override
+    public List<ExchangerUniqueCurrenciesDTO> getUsedCurrencies() {
+        return balanceService.getUsedCurrencies();
     }
 
     private void persistApiKeysSettings(User user, String privateKey, String publicApi, ExchangerCode code) {

@@ -3,9 +3,12 @@ package com.khomishchak.ws.model.response;
 import com.khomishchak.ws.services.integration.whitebit.exceptions.WhiteBitClientException;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -13,17 +16,17 @@ import java.util.Map;
 public class ErrorResp {
 
     private String message;
-    private String code;
-    private Map<String, Object> details;
+    private String type;
+    private List<ErrorDetail> details;
 
     public ErrorResp() {
-        this.details = new HashMap<>();
+        this.details = new ArrayList<>();
     }
 
-    public ErrorResp(String message, String code) {
+    public ErrorResp(String message, String type) {
         this();
         this.message = message;
-        this.code = code;
+        this.type = type;
     }
 
     public static ErrorResp fromValidationException(MethodArgumentNotValidException ex) {
@@ -35,11 +38,29 @@ public class ErrorResp {
 
     public static ErrorResp fromWhiteBitClientException(WhiteBitClientException ex) {
         ErrorResp response = new ErrorResp(ex.getMessage(), ex.getCode());
-        response.setDetails(Map.of("errors", ex.getErrors()));
+        List<String> errors = ex.getErrors();
+        for (int i = 0; i < errors.size(); i++) {
+            response.addDetail(String.format("detail%i", i), errors.get(i));
+        }
         return response;
     }
 
+    public static ErrorResp fromAuthenticationException(AuthenticationException ex, String errorType) {
+        return new ErrorResp(ex.getMessage(), errorType);
+    }
+
     public void addDetail(String key, Object value) {
-        this.details.put(key, value);
+        this.details.add(new ErrorDetail(key, value));
+    }
+
+    @Getter
+    public static class ErrorDetail {
+        private String key;
+        private Object value;
+
+        public ErrorDetail(String key, Object value) {
+            this.key = key;
+            this.value = value;
+        }
     }
 }

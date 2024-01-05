@@ -1,18 +1,12 @@
 package com.khomishchak.ws.services;
 
 import com.khomishchak.ws.model.User;
-import com.khomishchak.ws.model.requests.LoginRequest;
-import com.khomishchak.ws.model.requests.RegistrationRequest;
-import com.khomishchak.ws.model.response.LoginResult;
-import com.khomishchak.ws.model.response.RegistrationResult;
+import com.khomishchak.ws.model.requests.CreateUserReq;
+import com.khomishchak.ws.model.requests.AuthenticationRequest;
 
 public interface UserService {
-
     User getUserById(Long userId);
-
-    RegistrationResult registerUser(RegistrationRequest registrationRequest);
-
-    LoginResult authenticateUser(LoginRequest loginRequest);
-
+    Long authenticateUser(AuthenticationRequest authenticationRequest);
     User saveUser(User user);
+    Long createUser(CreateUserReq request);
 }

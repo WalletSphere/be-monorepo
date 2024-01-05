@@ -5,6 +5,7 @@ import com.khomishchak.ws.model.User;
 import com.khomishchak.ws.model.enums.ExchangerCode;
 import com.khomishchak.ws.model.exchanger.ApiKeySetting;
 import com.khomishchak.ws.model.exchanger.Balance;
+import com.khomishchak.ws.model.exchanger.ExchangerUniqueCurrenciesDTO;
 import com.khomishchak.ws.repositories.BalanceRepository;
 import com.khomishchak.ws.services.UserService;
 import com.khomishchak.ws.services.exchangers.ExchangerConnectorService;
@@ -76,6 +77,11 @@ public abstract class CommonBalanceService implements BalanceService {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void clearWholeBalanceCache(Long balanceId) {
         balanceCacheHandler.deleteAllBalanceRelatedCacheInfo(balanceId);
+    }
+
+    @Override
+    public List<ExchangerUniqueCurrenciesDTO> getUsedCurrencies() {
+        return balanceRepository.getAllUsedCurrencyCodes();
     }
 
     private List<Balance> synchronizeBalancesFrameWork(long userId) {

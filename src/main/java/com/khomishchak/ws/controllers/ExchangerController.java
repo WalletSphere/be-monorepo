@@ -2,6 +2,7 @@ package com.khomishchak.ws.controllers;
 
 import com.khomishchak.ws.model.enums.ExchangerCode;
 import com.khomishchak.ws.model.exchanger.Balance;
+import com.khomishchak.ws.model.exchanger.ExchangerUniqueCurrenciesDTO;
 import com.khomishchak.ws.model.exchanger.transaction.ExchangerDepositWithdrawalTransactions;
 import com.khomishchak.ws.model.requests.RegisterExchangerInfoReq;
 import com.khomishchak.ws.model.response.FirstlyGeneratedBalanceResp;
@@ -24,18 +25,18 @@ public class ExchangerController {
     }
 
     @PostMapping("/api-keys")
-    public FirstlyGeneratedBalanceResp addExchangerApiKeysForUser(@RequestAttribute Long userId,
+    public FirstlyGeneratedBalanceResp addExchangerApiKeysForUser(@RequestHeader("UserId") Long userId,
                                                                   @RequestBody RegisterExchangerInfoReq exchangerInfoReq) {
         return exchangerService.addGeneralExchangerInfo(exchangerInfoReq , userId);
     }
 
     @GetMapping("/{exchangerCode}/balance")
-    public Balance getAccountBalance(@RequestAttribute Long userId, @PathVariable String exchangerCode) {
+    public Balance getAccountBalance(@RequestHeader("UserId") Long userId, @PathVariable String exchangerCode) {
         return exchangerService.getMainBalance(userId, ExchangerCode.valueOf(exchangerCode));
     }
 
     @GetMapping("/balance/all")
-    public List<Balance> getAccountBalances(@RequestAttribute long userId) {
+    public List<Balance> getAccountBalances(@RequestHeader("UserId") long userId) {
         return exchangerService.getAllMainBalances(userId);
     }
 
@@ -46,18 +47,22 @@ public class ExchangerController {
     }
 
     @GetMapping("/deposit-withdrawal-history")
-    public List<ExchangerDepositWithdrawalTransactions> getWithdrawalDepositTransactionsHistory(@RequestAttribute long userId) {
+    public List<ExchangerDepositWithdrawalTransactions> getWithdrawalDepositTransactionsHistory(@RequestHeader("UserId") long userId) {
         return exchangerService.getWithdrawalDepositWalletHistory(userId);
     }
 
     @PostMapping("/synchronize/balance")
-    public SyncBalancesResp synchronizeBalanceDataForUser(@RequestAttribute Long userId) {
+    public SyncBalancesResp synchronizeBalanceDataForUser(@RequestHeader("UserId") Long userId) {
         return exchangerService.synchronizeBalanceDataForUser(userId);
     }
 
     @PostMapping("/deposit-withdrawal-history/synchronize")
-    public SyncDepositWithdrawalTransactionsResp synchronizeDWTransactionsHistory(@RequestAttribute Long userId) {
+    public SyncDepositWithdrawalTransactionsResp synchronizeDWTransactionsHistory(@RequestHeader("UserId") Long userId) {
         return exchangerService.synchronizeDepositWithdrawalTransactionsData(userId);
     }
 
+    @GetMapping("/used-currencies")
+    public List<ExchangerUniqueCurrenciesDTO> getCurrencies() {
+        return exchangerService.getUsedCurrencies();
+    }
 }

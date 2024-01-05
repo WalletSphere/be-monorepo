@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,13 +29,13 @@ public class GoalsController {
     }
 
     @PostMapping("/crypto-tables")
-    public ResponseEntity<CryptoGoalsTable> createCryptoGoalsTable(@RequestAttribute Long userId,
+    public ResponseEntity<CryptoGoalsTable> createCryptoGoalsTable(@RequestHeader("UserId") Long userId,
             @RequestBody CryptoGoalsTable requestTable) {
         return new ResponseEntity<>(goalsService.createCryptoGoalsTable(userId, requestTable), HttpStatus.CREATED);
     }
 
     @GetMapping("/crypto-tables")
-    public ResponseEntity<CryptoGoalsTable> getCryptoGoalsTable(@RequestAttribute Long userId) {
+    public ResponseEntity<CryptoGoalsTable> getCryptoGoalsTable(@RequestHeader("UserId") Long userId) {
         return new ResponseEntity<>(goalsService.getCryptoGoalsTable(userId), HttpStatus.OK);
     }
 
@@ -51,12 +51,12 @@ public class GoalsController {
     }
 
     @GetMapping("/self-goals")
-    public ResponseEntity<List<SelfGoal>> getSelfGoals(@RequestAttribute Long userId) {
+    public ResponseEntity<List<SelfGoal>> getSelfGoals(@RequestHeader("UserId") Long userId) {
         return new ResponseEntity<>(goalsService.getSelfGoals(userId), HttpStatus.OK);
     }
 
     @PostMapping("/self-goals")
-    public ResponseEntity<List<SelfGoal>> createSelfGoals(@RequestAttribute Long userId, @RequestBody List<SelfGoal> goals) {
+    public ResponseEntity<List<SelfGoal>> createSelfGoals(@RequestHeader("UserId") Long userId, @RequestBody List<SelfGoal> goals) {
 
         return new ResponseEntity<>(goalsService.createSelfGoals(userId, goals), HttpStatus.OK);
     }

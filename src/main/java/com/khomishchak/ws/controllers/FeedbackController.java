@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,7 +28,7 @@ public class FeedbackController {
 
     @PostMapping
     public ResponseEntity<CreateFeedbackResp> createFeedback(@RequestBody FeedbackRequest feedbackRequest,
-                                                             @RequestAttribute long userId) {
+                                                             @RequestHeader("UserId") long userId) {
         return new ResponseEntity<>(feedbackService.saveFeedback(feedbackRequest, userId), HttpStatus.CREATED);
     }
 

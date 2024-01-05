@@ -28,3 +28,5 @@ ws:
         base-url: "https://whitebit.com"
         get-main-balance-url: "/api/v4/main-account/balance"
         get-deposit-withdraw-history: "/api/v4/main-account/history"
+server:
+  port: 8085
