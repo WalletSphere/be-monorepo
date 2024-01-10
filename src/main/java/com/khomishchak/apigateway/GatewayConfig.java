@@ -1,7 +1,6 @@
 package com.khomishchak.apigateway;
 
 import com.khomishchak.apigateway.filters.AuthenticationFilter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
@@ -23,7 +22,7 @@ public class GatewayConfig {
     @Value("${EXCHANGER_SERVICE_URL:http://localhost:8085}")
     private String exchangerServiceUrl;
 
-    @Value("${FEEDBACK_SERVICE_URL:http://localhost:8085}")
+    @Value("${FEEDBACK_SERVICE_URL:http://localhost:6273}")
     private String feedbackServiceUrl;
 
     @Value("${GOAL_SERVICE_URL:http://localhost:8085}")
