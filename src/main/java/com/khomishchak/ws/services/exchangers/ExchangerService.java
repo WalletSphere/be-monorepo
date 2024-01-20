@@ -9,7 +9,6 @@ import com.khomishchak.ws.model.response.FirstlyGeneratedBalanceResp;
 import com.khomishchak.ws.model.response.SyncBalancesResp;
 import com.khomishchak.ws.model.response.SyncDepositWithdrawalTransactionsResp;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -20,8 +19,6 @@ public interface ExchangerService {
     Balance getMainBalance(long userId, ExchangerCode code);
 
     List<Balance> getAllMainBalances(long userId);
-
-    double getDepositValueForPeriod(long userId, String ticker, LocalDateTime startingDate, LocalDateTime endingDate);
 
     List<ExchangerDepositWithdrawalTransactions> getWithdrawalDepositWalletHistory(long userId);
 
