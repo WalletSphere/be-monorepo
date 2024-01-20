@@ -1,5 +1,6 @@
 package com.khomishchak.ws.services.exchangers;
 
+import com.khomishchak.ws.model.TransferTransactionType;
 import com.khomishchak.ws.model.User;
 import com.khomishchak.ws.model.enums.ExchangerCode;
 import com.khomishchak.ws.model.enums.RegistrationStatus;
@@ -8,6 +9,7 @@ import com.khomishchak.ws.model.exchanger.ApiKeysPair;
 import com.khomishchak.ws.model.exchanger.Balance;
 import com.khomishchak.ws.model.exchanger.ExchangerUniqueCurrenciesDTO;
 import com.khomishchak.ws.model.exchanger.transaction.ExchangerDepositWithdrawalTransactions;
+import com.khomishchak.ws.model.exchanger.transaction.Transaction;
 import com.khomishchak.ws.model.requests.RegisterApiKeysReq;
 import com.khomishchak.ws.model.requests.RegisterExchangerInfoReq;
 import com.khomishchak.ws.model.response.FirstlyGeneratedBalanceResp;
@@ -21,6 +23,8 @@ import com.khomishchak.ws.services.security.encryption.AesEncryptionService;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -64,6 +68,25 @@ public class ExchangerServiceImpl implements ExchangerService {
     @Override
     public List<Balance> getAllMainBalances(long userId) {
         return balanceService.getMainBalances(userId);
+    }
+
+    @Override
+    public double getDepositValueForPeriod(long userId, String ticker, LocalDateTime startingDate, LocalDateTime endingDate) {
+        return getWithdrawalDepositWalletHistory(userId).stream()
+                .map(transactions ->
+                        getDepositValueForPeriodForSingleIntegratedBalance(transactions, ticker, startingDate, endingDate))
+                .reduce(0.0, Double::sum);
+    }
+
+    private double getDepositValueForPeriodForSingleIntegratedBalance(ExchangerDepositWithdrawalTransactions transactions,
+                                                                      String ticker, LocalDateTime startingDate,
+                                                                      LocalDateTime endingDate) {
+        return transactions.getTransactions().stream()
+                .filter(transaction -> transaction.getTicker().equalsIgnoreCase(ticker) &&
+                        transaction.getTransferTransactionType().equals(TransferTransactionType.DEPOSIT) &&
+                        transaction.getCreatedAt().isAfter(startingDate) && transaction.getCreatedAt().isBefore(endingDate))
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add).doubleValue();
     }
 
     @Override

@@ -3,8 +3,6 @@ package com.khomishchak.ws.model;
 import com.khomishchak.ws.model.enums.UserRole;
 import com.khomishchak.ws.model.exchanger.ApiKeySetting;
 import com.khomishchak.ws.model.exchanger.Balance;
-import com.khomishchak.ws.model.goals.CryptoGoalsTable;
-import com.khomishchak.ws.model.goals.SelfGoal;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,7 +13,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -56,15 +53,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    private CryptoGoalsTable cryptoGoalsTable;
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ApiKeySetting> apiKeysSettings;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Balance> balances;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<SelfGoal> selfGoals;
 }
