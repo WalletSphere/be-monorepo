@@ -22,10 +22,13 @@ public class GatewayConfig {
     @Value("${EXCHANGER_SERVICE_URL:http://localhost:8085}")
     private String exchangerServiceUrl;
 
+    @Value("${BALANCE_SERVICE_URL:http://localhost:8085}")
+    private String balanceServiceUrl;
+
     @Value("${FEEDBACK_SERVICE_URL:http://localhost:6273}")
     private String feedbackServiceUrl;
 
-    @Value("${GOAL_SERVICE_URL:http://localhost:8085}")
+    @Value("${GOAL_SERVICE_URL:http://localhost:43654}")
     private String goalServiceUrl;
 
     @Value("${USERGOAL_SERVICE_URL:http://localhost:8085}")
@@ -67,6 +70,11 @@ public class GatewayConfig {
                                 .filter(authenticationFilter)
                         )
                         .uri(userServiceUrl))
+                .route("balance-service", r -> r.path("/balances/**")
+                        .filters(f -> f
+                                .prefixPath("/api/v1")
+                        )
+                        .uri(balanceServiceUrl))
                 .route("pricing-service", r -> r.path("/crypto-pricing")
                         .uri(pricingServiceUrl))
                 .build();
