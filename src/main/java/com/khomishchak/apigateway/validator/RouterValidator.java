@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 public class RouterValidator {
 
     public static final List<String> openApiEndpoints = List.of(
-            "/auth/register", "/auth/login", "/users", "/users/authenticate", "/exchangers/used-currencies"
+            "/auth/register", "/auth/login", "/auth/token", "/users", "/users/authenticate", "/exchangers/used-currencies"
     );
 
     public Predicate<ServerHttpRequest> isPublicEndpoint =
