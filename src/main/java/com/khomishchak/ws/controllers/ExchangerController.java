@@ -6,8 +6,6 @@ import com.khomishchak.ws.model.exchanger.ExchangerUniqueCurrenciesDTO;
 import com.khomishchak.ws.model.exchanger.transaction.ExchangerDepositWithdrawalTransactions;
 import com.khomishchak.ws.model.requests.RegisterExchangerInfoReq;
 import com.khomishchak.ws.model.response.FirstlyGeneratedBalanceResp;
-import com.khomishchak.ws.model.response.SyncBalancesResp;
-import com.khomishchak.ws.model.response.SyncDepositWithdrawalTransactionsResp;
 import com.khomishchak.ws.services.exchangers.ExchangerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -52,12 +50,12 @@ public class ExchangerController {
     }
 
     @PostMapping("/synchronize/balance")
-    public SyncBalancesResp synchronizeBalanceDataForUser(@RequestHeader("UserId") Long userId) {
+    public List<Balance> synchronizeBalanceDataForUser(@RequestHeader("UserId") Long userId) {
         return exchangerService.synchronizeBalanceDataForUser(userId);
     }
 
     @PostMapping("/deposit-withdrawal-history/synchronize")
-    public SyncDepositWithdrawalTransactionsResp synchronizeDWTransactionsHistory(@RequestHeader("UserId") Long userId) {
+    public List<ExchangerDepositWithdrawalTransactions> synchronizeDWTransactionsHistory(@RequestHeader("UserId") Long userId) {
         return exchangerService.synchronizeDepositWithdrawalTransactionsData(userId);
     }
 

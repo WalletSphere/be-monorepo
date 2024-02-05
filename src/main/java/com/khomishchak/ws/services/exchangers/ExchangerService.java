@@ -6,8 +6,6 @@ import com.khomishchak.ws.model.exchanger.ExchangerUniqueCurrenciesDTO;
 import com.khomishchak.ws.model.exchanger.transaction.ExchangerDepositWithdrawalTransactions;
 import com.khomishchak.ws.model.requests.RegisterExchangerInfoReq;
 import com.khomishchak.ws.model.response.FirstlyGeneratedBalanceResp;
-import com.khomishchak.ws.model.response.SyncBalancesResp;
-import com.khomishchak.ws.model.response.SyncDepositWithdrawalTransactionsResp;
 
 import java.util.List;
 
@@ -22,8 +20,8 @@ public interface ExchangerService {
 
     List<ExchangerDepositWithdrawalTransactions> getWithdrawalDepositWalletHistory(long userId);
 
-    SyncBalancesResp synchronizeBalanceDataForUser(long userId);
-    SyncDepositWithdrawalTransactionsResp synchronizeDepositWithdrawalTransactionsData(long userId);
+    List<Balance> synchronizeBalanceDataForUser(long userId);
+    List<ExchangerDepositWithdrawalTransactions> synchronizeDepositWithdrawalTransactionsData(long userId);
 
     void deleteExchangerForUser(long balanceId);
 

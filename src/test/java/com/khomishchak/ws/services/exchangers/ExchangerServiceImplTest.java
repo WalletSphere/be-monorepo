@@ -9,8 +9,6 @@ import com.khomishchak.ws.model.exchanger.transaction.ExchangerDepositWithdrawal
 import com.khomishchak.ws.model.requests.RegisterApiKeysReq;
 import com.khomishchak.ws.model.requests.RegisterExchangerInfoReq;
 import com.khomishchak.ws.model.response.FirstlyGeneratedBalanceResp;
-import com.khomishchak.ws.model.response.SyncBalancesResp;
-import com.khomishchak.ws.model.response.SyncDepositWithdrawalTransactionsResp;
 import com.khomishchak.ws.repositories.ApiKeySettingRepository;
 import com.khomishchak.ws.services.UserService;
 import com.khomishchak.ws.services.exchangers.balances.BalanceService;
@@ -151,10 +149,9 @@ class ExchangerServiceImplTest {
         when(balanceService.synchronizeBalances(eq(USER_ID))).thenReturn(List.of(firstSyncBalance, secondSyncBalance));
 
         // when
-        SyncBalancesResp result = exchangerService.synchronizeBalanceDataForUser(USER_ID);
+        List<Balance> resultBalances = exchangerService.synchronizeBalanceDataForUser(USER_ID);
 
         // then
-        List<Balance> resultBalances = result.synchronizedBalances();
         assertThat(resultBalances.size()).isEqualTo(2);
         assertThat(resultBalances.get(0)).isEqualTo(firstSyncBalance);
         assertThat(resultBalances.get(1)).isEqualTo(secondSyncBalance);
@@ -170,12 +167,12 @@ class ExchangerServiceImplTest {
                 .thenReturn(List.of(transactions));
 
         // when
-        SyncDepositWithdrawalTransactionsResp result = exchangerService.synchronizeDepositWithdrawalTransactionsData(USER_ID);
+        List<ExchangerDepositWithdrawalTransactions> result =
+                exchangerService.synchronizeDepositWithdrawalTransactionsData(USER_ID);
 
         // then
-        List<ExchangerDepositWithdrawalTransactions> resultBalances = result.transactions();
-        assertThat(resultBalances.size()).isEqualTo(1);
-        assertThat(resultBalances.get(0)).isEqualTo(transactions);
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.get(0)).isEqualTo(transactions);
     }
 
     @Test
