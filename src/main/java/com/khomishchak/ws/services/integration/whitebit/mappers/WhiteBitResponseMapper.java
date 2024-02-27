@@ -3,6 +3,8 @@ package com.khomishchak.ws.services.integration.whitebit.mappers;
 import com.khomishchak.ws.model.TransferTransactionType;
 import com.khomishchak.ws.model.exchanger.Currency;
 import com.khomishchak.ws.model.exchanger.transaction.DepositWithdrawalTransaction;
+import com.khomishchak.ws.model.exchanger.transaction.TransactionStatus;
+import com.khomishchak.ws.services.integration.whitebit.model.WhiteBItTransactionStatusCode;
 import com.khomishchak.ws.services.integration.whitebit.model.WhiteBitBalanceResp;
 import com.khomishchak.ws.services.integration.whitebit.model.WhiteBitDepositWithdrawalHistoryResp;
 import org.springframework.stereotype.Component;
@@ -46,11 +48,21 @@ public class WhiteBitResponseMapper {
                             .amount(BigDecimal.valueOf(record.getAmount()))
                             .ticker(record.getTicker())
                             .transferTransactionType(record.getMethod() == 1 ? TransferTransactionType.DEPOSIT : TransferTransactionType.WITHDRAWAL)
+                            .transactionStatus(getTransactionsStatus(record.getStatus()))
                             .build();
 
                     result.add(transaction);
                 });
 
         return result;
+    }
+
+    private TransactionStatus getTransactionsStatus(int wbtTransactionCode) {
+        WhiteBItTransactionStatusCode transactionsStatus = WhiteBItTransactionStatusCode.getStatusByCode(wbtTransactionCode);
+        return switch (transactionsStatus) {
+            // more will be added once new transactions logic will be added
+            case COMPLETED -> TransactionStatus.COMPLETED;
+            default -> null;
+        };
     }
 }

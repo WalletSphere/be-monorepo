@@ -26,6 +26,7 @@ public class Transaction {
     private String ticker;
     private BigDecimal fee;
     private BigDecimal amount;
+    private TransactionStatus transactionStatus;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;

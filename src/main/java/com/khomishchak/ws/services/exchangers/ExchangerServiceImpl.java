@@ -8,6 +8,7 @@ import com.khomishchak.ws.model.exchanger.ApiKeysPair;
 import com.khomishchak.ws.model.exchanger.Balance;
 import com.khomishchak.ws.model.exchanger.ExchangerUniqueCurrenciesDTO;
 import com.khomishchak.ws.model.exchanger.transaction.ExchangerDepositWithdrawalTransactions;
+import com.khomishchak.ws.model.exchanger.transaction.Transaction;
 import com.khomishchak.ws.model.requests.RegisterApiKeysReq;
 import com.khomishchak.ws.model.requests.RegisterExchangerInfoReq;
 import com.khomishchak.ws.model.response.FirstlyGeneratedBalanceResp;
@@ -15,10 +16,13 @@ import com.khomishchak.ws.repositories.ApiKeySettingRepository;
 import com.khomishchak.ws.services.UserService;
 import com.khomishchak.ws.services.exchangers.balances.BalanceService;
 import com.khomishchak.ws.services.exchangers.balances.history.AccountBalanceTransferOperationsHistoryService;
+import com.khomishchak.ws.model.filter.TransactionFilter;
+import com.khomishchak.ws.model.filter.TransactionSearchCriteria;
 import com.khomishchak.ws.services.security.encryption.AesEncryptionService;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -62,6 +66,21 @@ public class ExchangerServiceImpl implements ExchangerService {
     @Override
     public List<Balance> getAllMainBalances(long userId) {
         return balanceService.getMainBalances(userId);
+    }
+
+    @Override
+    public double getDepositValueForPeriod(long userId, TransactionSearchCriteria searchCriteria) {
+        return getWithdrawalDepositWalletHistory(userId).stream()
+                .map(transactions ->
+                        getDepositValueForPeriodForSingleIntegratedBalance(transactions, searchCriteria))
+                .reduce(0.0, Double::sum);
+    }
+
+    private double getDepositValueForPeriodForSingleIntegratedBalance(ExchangerDepositWithdrawalTransactions transactions,
+                                                                      TransactionSearchCriteria searchCriteria) {
+        return TransactionFilter.filterTransactions(transactions.getTransactions(), searchCriteria).stream()
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add).doubleValue();
     }
 
     @Override

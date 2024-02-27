@@ -9,6 +9,9 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -50,18 +53,21 @@ class WhiteBitResponseMapperTest {
 
     }
 
-    @Test
-    void shouldMapWhiteBitTransactionsRespToInternalTransactionsList() {
+    // TODO: rewrite with SourceMethod with providing all posible combinations of transaction formats
+    @ParameterizedTest
+    @CsvSource({"DEPOSIT,1", "WITHDRAWAL,2"})
+    void shouldMapWhiteBitTransactionsRespToInternalTransactionsList(TransferTransactionType transactionType,
+                                                                     int transactionMethod) {
         // given
         DepositWithdrawalTransaction transaction = DepositWithdrawalTransaction.depositWithdrawalTransactionBuilder()
                 .transactionId("transactionId123")
                 .transactionHash("transactionHash123")
                 .amount(BigDecimal.valueOf(100.0))
                 .ticker("BTC")
-                .transferTransactionType(TransferTransactionType.DEPOSIT)
+                .transferTransactionType(transactionType)
                 .build();
 
-        WhiteBitDepositWithdrawalHistoryResp resp = generateWhiteBitDepositWithdrawalHistoryResp();
+        WhiteBitDepositWithdrawalHistoryResp resp = generateWhiteBitDepositWithdrawalHistoryResp(transactionMethod);
 
         // when
         List<DepositWithdrawalTransaction> result = mapper.mapWithdrawalDepositHistoryToTransactions(resp);
@@ -81,22 +87,20 @@ class WhiteBitResponseMapperTest {
         return resp;
     }
 
-    private WhiteBitDepositWithdrawalHistoryResp generateWhiteBitDepositWithdrawalHistoryResp() {
+    private WhiteBitDepositWithdrawalHistoryResp generateWhiteBitDepositWithdrawalHistoryResp(int transactionMethod) {
         List<WhiteBitDepositWithdrawalHistoryResp.Record> records = new ArrayList<>();
-
-        records.add(generateWhiteBitDepositWithdrawalHistoryRespRecord());
-
+        records.add(generateWhiteBitDepositWithdrawalHistoryRespRecord(transactionMethod));
         return new WhiteBitDepositWithdrawalHistoryResp(records);
     }
 
-    private WhiteBitDepositWithdrawalHistoryResp.Record generateWhiteBitDepositWithdrawalHistoryRespRecord() {
+    private WhiteBitDepositWithdrawalHistoryResp.Record generateWhiteBitDepositWithdrawalHistoryRespRecord(int transactionMethod) {
         return new WhiteBitDepositWithdrawalHistoryResp.Record(
                 "someAddress",
                 System.currentTimeMillis(),
                 "BTC",
-                1,
+                transactionMethod,
                 100.0,
-                0,
+                3,
                 "transactionId123",
                 "transactionHash123"
         );

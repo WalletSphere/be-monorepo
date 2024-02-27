@@ -36,8 +36,10 @@ public class DepositWithdrawalTransaction extends Transaction {
 
     @Builder(builderMethodName = "depositWithdrawalTransactionBuilder")
     public DepositWithdrawalTransaction(String transactionId, String transactionHash, String ticker, BigDecimal fee,
-                                        BigDecimal amount, LocalDateTime createdAt, TransferTransactionType transferTransactionType) {
-        super(transactionId, transactionHash, ticker, fee, amount, createdAt);
+                                        BigDecimal amount, LocalDateTime createdAt,
+                                        TransferTransactionType transferTransactionType,
+                                        TransactionStatus transactionStatus) {
+        super(transactionId, transactionHash, ticker, fee, amount, transactionStatus, createdAt);
         this.transferTransactionType = transferTransactionType;
     }
 }
