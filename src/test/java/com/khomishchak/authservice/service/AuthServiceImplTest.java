@@ -2,7 +2,7 @@ package com.khomishchak.authservice.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.khomishchak.authservice.exception.AuthException;
+import com.khomishchak.authservice.exception.CouldNotAuthenticateUserException;
 import com.khomishchak.authservice.model.auth.DeviceType;
 import com.khomishchak.authservice.model.auth.dto.AuthenticationRequestDTO;
 import com.khomishchak.authservice.model.auth.dto.CreateUserRequestDTO;
@@ -101,7 +101,7 @@ class AuthServiceImplTest {
         when(mapper.readValue(eq("{errorMessage}"), eq(ErrorResp.class)))
                 .thenReturn(errorResp);
         // when
-        AuthException result = assertThrows(AuthException.class, () -> {
+        CouldNotAuthenticateUserException result = assertThrows(CouldNotAuthenticateUserException.class, () -> {
             authService.login(request);
         });
 

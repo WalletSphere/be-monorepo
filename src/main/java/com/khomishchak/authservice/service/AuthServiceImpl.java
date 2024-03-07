@@ -2,7 +2,7 @@ package com.khomishchak.authservice.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.khomishchak.authservice.exception.AuthException;
+import com.khomishchak.authservice.exception.CouldNotAuthenticateUserException;
 import com.khomishchak.authservice.model.auth.dto.AuthenticationRequestDTO;
 import com.khomishchak.authservice.model.auth.dto.CreateUserRequestDTO;
 import com.khomishchak.authservice.model.auth.request.LoginReq;
@@ -66,7 +66,7 @@ public class AuthServiceImpl implements AuthService {
         try {
             return restTemplate.postForObject(url, request, responseType);
         } catch (HttpClientErrorException clientErrorException) {
-            handleErrorResponse(clientErrorException);
+            handleFailedAuthErrorResponse(clientErrorException);
             return null;
         }
     }
@@ -77,8 +77,8 @@ public class AuthServiceImpl implements AuthService {
         return new ProcessedTokenResp(jwtUtil.extractUserId(token), jwtUtil.isTokenExpired(token));
     }
 
-    private void handleErrorResponse(HttpStatusCodeException exception) {
-        throw new AuthException("Could not authorize user", mapErrorResponseMessage(exception.getMessage()));
+    private void handleFailedAuthErrorResponse(HttpStatusCodeException exception) {
+        throw new CouldNotAuthenticateUserException("Could not authorize user", mapErrorResponseMessage(exception.getMessage()));
     }
 
     private ErrorResp mapErrorResponseMessage(String errorMessageJson) {

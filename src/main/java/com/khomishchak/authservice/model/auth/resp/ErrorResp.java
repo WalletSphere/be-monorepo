@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -11,6 +12,13 @@ public class ErrorResp {
     private String errorType;
     private String errorMessage;
     private List<ErrorDetail> details;
+
+    public ErrorResp(@JsonProperty("type") String errorType,
+                     @JsonProperty("message") String errorMessage) {
+        this.errorType = errorType;
+        this.errorMessage = errorMessage;
+        this.details = new ArrayList<>();
+    }
 
     public ErrorResp(@JsonProperty("type") String errorType,
                      @JsonProperty("message") String errorMessage,

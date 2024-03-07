@@ -1,7 +1,10 @@
 package com.khomishchak.authservice.service.util;
 
+import com.khomishchak.authservice.exception.InvalidJwtTokenException;
 import com.khomishchak.authservice.model.auth.DeviceType;
+import com.khomishchak.authservice.model.auth.resp.ErrorResp;
 import jakarta.annotation.PostConstruct;
+
 import org.jose4j.jwk.EcJwkGenerator;
 import org.jose4j.jwk.EllipticCurveJsonWebKey;
 import org.jose4j.jws.AlgorithmIdentifiers;
@@ -15,8 +18,7 @@ import org.jose4j.jwt.consumer.JwtContext;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.keys.EllipticCurves;
 import org.jose4j.lang.JoseException;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.security.Key;
@@ -90,7 +92,6 @@ public class JwtUtil {
             tokenIsValid = extractAllClaims(token).getExpirationTime().isAfter(NumericDate.now());
         } catch (MalformedClaimException exception) {
             tokenIsValid = false;
-            // TODO: log error
         }
         return tokenIsValid;
     }
@@ -123,7 +124,7 @@ public class JwtUtil {
         try{
             return jwtConsumer.process(token);
         } catch (InvalidJwtException e) {
-            throw new RuntimeException("Was not Able to process jwt token: %s", e);
+            throw new InvalidJwtTokenException(e.getMessage(), new ErrorResp("INVALID_TOKEN", e.getMessage()));
         }
     }
 }
