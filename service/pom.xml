@@ -19,6 +19,7 @@
 
     <modules>
         <module>goals-service</module>
+        <module>feedback-service</module>
     </modules>
 
 </project>
