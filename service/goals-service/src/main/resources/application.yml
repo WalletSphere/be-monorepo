@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: "jdbc:postgresql://localhost:5432/crypto"
+    username: "postgres"
+    password: "1111"
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: "org.hibernate.dialect.PostgreSQLDialect"
+        format_sql: false
+        globally_quoted_identifiers: true
+server:
+  port: 43654
