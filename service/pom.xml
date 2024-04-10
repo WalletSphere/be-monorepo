@@ -21,6 +21,7 @@
         <module>goals-service</module>
         <module>feedback-service</module>
         <module>auth-service</module>
+        <module>monolith-part</module>
     </modules>
 
 </project>

@@ -4,17 +4,16 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.1.5</version>
-		<relativePath/>
+		<groupId>com.wallet-sphere</groupId>
+		<artifactId>service-base</artifactId>
+		<version>5.0.0-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
 
-	<groupId>com.khomishchak</groupId>
+	<!-- TODO: should be separated into different microservices -->
 	<artifactId>Wallet-Sphere</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
 	<name>Wallet-Sphere</name>
-	<description>Wallet-Sphere Rest API</description>
+	<description>monolith part of WS</description>
 
 	<properties>
 		<lombok.version>1.18.28</lombok.version>
