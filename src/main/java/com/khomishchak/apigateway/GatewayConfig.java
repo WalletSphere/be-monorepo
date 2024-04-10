@@ -73,6 +73,7 @@ public class GatewayConfig {
                 .route("balance-service", r -> r.path("/balances/**")
                         .filters(f -> f
                                 .prefixPath("/api/v1")
+                                .filter(authenticationFilter)
                         )
                         .uri(balanceServiceUrl))
                 .route("pricing-service", r -> r.path("/crypto-pricing")
