@@ -20,6 +20,7 @@
     <modules>
         <module>goals-service</module>
         <module>feedback-service</module>
+        <module>auth-service</module>
     </modules>
 
 </project>
