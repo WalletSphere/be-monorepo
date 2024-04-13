@@ -23,7 +23,7 @@
         <module>auth-service</module>
         <module>monolith-part</module>
         <module>api-gateway</module>
-        <module>goals-service</module>
+        <module>pricing-service</module>
     </modules>
 
 </project>

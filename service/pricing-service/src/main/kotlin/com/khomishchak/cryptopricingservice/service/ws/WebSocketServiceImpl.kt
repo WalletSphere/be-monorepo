@@ -16,7 +16,7 @@ import org.springframework.web.client.getForObject
 
 @Service
 class WebSocketServiceImpl (private val integrationWebSocketConnectors: List<IntegrationWebSocketService>,
-                            @Qualifier("pricingServiceRestTemplate") private val restTemplate: RestTemplate)
+                            private val restTemplate: RestTemplate)
     : WebSocketService {
 
     private val client = OkHttpClient()
