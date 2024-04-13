@@ -7,7 +7,6 @@ import com.khomishchak.goalsservice.model.transaction.CreateNewRecordTransaction
 import com.khomishchak.goalsservice.service.GoalsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +24,8 @@ import java.util.List;
 public class GoalsController {
 
     // TODO: replace @RequestHeader("UserId") with AOP poincut to extract userId before needed controllers
+
+    // TODO: add more request DTOs instead of entities
 
     public static final String USER_ID_HEADER = "UserId";
 

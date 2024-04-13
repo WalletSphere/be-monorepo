@@ -18,7 +18,7 @@
 	<properties>
 		<lombok.version>1.18.28</lombok.version>
 		<postgresql.version>42.6.0</postgresql.version>
-		<mock.web.server.version>4.0.1</mock.web.server.version>
+		<mock.web.server.version>4.12.0</mock.web.server.version>
 		<java.version>17</java.version>
 	</properties>
 
@@ -40,6 +40,15 @@
 			<artifactId>spring-boot-testcontainers</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- TODO: quick fix to run unit tests, should be removed as we should be using junit5 -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.13.2</version>
+			<scope>test</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>junit-jupiter</artifactId>

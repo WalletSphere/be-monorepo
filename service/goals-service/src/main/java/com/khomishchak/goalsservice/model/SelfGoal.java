@@ -46,9 +46,9 @@ public class SelfGoal {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
 
-    private boolean isAchieved = false;
+    private boolean achieved = false;
     // closed means that we won't have any running logic on this entity, we will be only getting the info about closed goals
-    private boolean isClosed = false;
+    private boolean closed = false;
 
     private Long userId;
 }

@@ -98,7 +98,7 @@ public class GoalsServiceImpl implements GoalsService {
     public CryptoGoalsTable updateCryptoGoalsTable(CreateNewRecordTransaction transaction, long tableId) {
         CryptoGoalsTable table = getCryptoGoalsTableOrThrowException(tableId);
         table.addNewRecord(new CryptoGoalsTableRecord(transaction));
-        return cryptoGoalsTableRepository.save(table);
+        return saveCryptoTable(table);
     }
 
     @Override
