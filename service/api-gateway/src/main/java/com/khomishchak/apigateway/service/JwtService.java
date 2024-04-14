@@ -1,7 +1,7 @@
 package com.khomishchak.apigateway.service;
 
-import com.khomishchak.apigateway.model.ProcessedTokenResp;
+import com.walletsphere.model.authentication.ProcessedJwtTokenResp;
 
 public interface JwtService {
-    ProcessedTokenResp processToken(String token);
+    ProcessedJwtTokenResp processToken(String token);
 }

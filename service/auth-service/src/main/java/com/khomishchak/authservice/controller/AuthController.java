@@ -3,9 +3,9 @@ package com.khomishchak.authservice.controller;
 import com.khomishchak.authservice.model.auth.request.LoginReq;
 import com.khomishchak.authservice.model.auth.request.RegistrationReq;
 import com.khomishchak.authservice.model.auth.resp.LoginResp;
-import com.khomishchak.authservice.model.auth.resp.ProcessedTokenResp;
 import com.khomishchak.authservice.model.auth.resp.RegistrationResp;
 import com.khomishchak.authservice.service.AuthService;
+import com.walletsphere.model.authentication.ProcessedJwtTokenResp;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -39,7 +39,7 @@ public class AuthController {
     }
 
     @PostMapping("/token")
-    public ResponseEntity<ProcessedTokenResp> validateToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String tokenHeader) {
+    public ResponseEntity<ProcessedJwtTokenResp> validateToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String tokenHeader) {
         return new ResponseEntity<>(authService.validateToken(tokenHeader), HttpStatus.OK);
     }
 }

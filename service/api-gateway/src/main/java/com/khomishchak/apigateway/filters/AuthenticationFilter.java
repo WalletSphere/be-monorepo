@@ -1,9 +1,9 @@
 package com.khomishchak.apigateway.filters;
 
 import com.khomishchak.apigateway.exceptions.MissingHeaderException;
-import com.khomishchak.apigateway.model.ProcessedTokenResp;
 import com.khomishchak.apigateway.service.JwtService;
 import com.khomishchak.apigateway.validator.RouterValidator;
+import com.walletsphere.model.authentication.ProcessedJwtTokenResp;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -44,7 +44,7 @@ public class AuthenticationFilter implements GatewayFilter {
         }
 
         final String token = getAuthHeader(request);
-        ProcessedTokenResp resp = jwtService.processToken(token);
+        ProcessedJwtTokenResp resp = jwtService.processToken(token);
 
         if (!resp.validated()) {
             return this.onError(exchange, HttpStatus.FORBIDDEN);

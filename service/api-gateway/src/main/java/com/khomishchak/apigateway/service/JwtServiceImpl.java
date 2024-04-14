@@ -1,7 +1,6 @@
 package com.khomishchak.apigateway.service;
 
-import com.khomishchak.apigateway.model.ProcessedTokenResp;
-import org.springframework.beans.factory.annotation.Qualifier;
+import com.walletsphere.model.authentication.ProcessedJwtTokenResp;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -18,15 +17,15 @@ public class JwtServiceImpl implements JwtService {
     private String validateTokenUrl;
     private final RestTemplate restTemplate;
 
-    public JwtServiceImpl(@Qualifier("wsGatewayRestTemplate") RestTemplate restTemplate) {
+    public JwtServiceImpl(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
     @Override
-    public ProcessedTokenResp processToken(String token) {
+    public ProcessedJwtTokenResp processToken(String token) {
         if (token == null) throw new RuntimeException("authetication token is null");
         HttpEntity<String> requestEntity = createAuthorizationRequest(Map.of(HttpHeaders.AUTHORIZATION, token));
-        return restTemplate.postForObject(validateTokenUrl, requestEntity, ProcessedTokenResp.class);
+        return restTemplate.postForObject(validateTokenUrl, requestEntity, ProcessedJwtTokenResp.class);
     }
 
     private HttpEntity<String> createAuthorizationRequest(Map<String, String> headerParams) {

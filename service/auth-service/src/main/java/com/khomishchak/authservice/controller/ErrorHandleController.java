@@ -4,7 +4,7 @@ import com.khomishchak.authservice.exception.CouldNotAuthenticateUserException;
 import com.khomishchak.authservice.exception.InvalidJwtTokenException;
 import com.khomishchak.authservice.model.auth.resp.ControllerHandlerErrorResp;
 import com.khomishchak.authservice.model.auth.resp.ErrorResp;
-import com.khomishchak.authservice.model.auth.resp.ProcessedTokenResp;
+import com.walletsphere.model.authentication.ProcessedJwtTokenResp;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -26,6 +26,6 @@ public class ErrorHandleController {
 
     @ExceptionHandler(InvalidJwtTokenException.class)
     public ResponseEntity<?> handleAuthenticationException(InvalidJwtTokenException ex) {
-        return ResponseEntity.ok().body(new ProcessedTokenResp(0L, false));
+        return ResponseEntity.ok().body(new ProcessedJwtTokenResp(0L, false));
     }
 }

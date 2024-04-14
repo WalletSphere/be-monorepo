@@ -7,7 +7,7 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class GatewayBeanConfig {
 
-    @Bean("wsGatewayRestTemplate")
+    @Bean
     public RestTemplate getRestTemplate() {
         return new RestTemplate();
     }

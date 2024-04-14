@@ -17,6 +17,13 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.wallet-sphere</groupId>
+            <artifactId>model</artifactId>
+        </dependency>
+    </dependencies>
+
     <modules>
         <module>goals-service</module>
         <module>feedback-service</module>
@@ -26,4 +33,13 @@
         <module>pricing-service</module>
     </modules>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.wallet-sphere</groupId>
+                <artifactId>model</artifactId>
+                <version>5.0.0-SNAPSHOT</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>

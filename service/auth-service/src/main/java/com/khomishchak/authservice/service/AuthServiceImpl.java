@@ -9,9 +9,9 @@ import com.khomishchak.authservice.model.auth.request.LoginReq;
 import com.khomishchak.authservice.model.auth.request.RegistrationReq;
 import com.khomishchak.authservice.model.auth.resp.ErrorResp;
 import com.khomishchak.authservice.model.auth.resp.LoginResp;
-import com.khomishchak.authservice.model.auth.resp.ProcessedTokenResp;
 import com.khomishchak.authservice.model.auth.resp.RegistrationResp;
 import com.khomishchak.authservice.service.util.JwtUtil;
+import com.walletsphere.model.authentication.ProcessedJwtTokenResp;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -72,9 +72,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ProcessedTokenResp validateToken(String tokenHeader) {
+    public ProcessedJwtTokenResp validateToken(String tokenHeader) {
         String token = tokenHeader.substring(TOKEN_PREFIX.length());
-        return new ProcessedTokenResp(jwtUtil.extractUserId(token), jwtUtil.isTokenExpired(token));
+        return new ProcessedJwtTokenResp(jwtUtil.extractUserId(token), jwtUtil.isTokenExpired(token));
     }
 
     private void handleFailedAuthErrorResponse(HttpStatusCodeException exception) {

@@ -10,9 +10,9 @@ import com.khomishchak.authservice.model.auth.request.LoginReq;
 import com.khomishchak.authservice.model.auth.request.RegistrationReq;
 import com.khomishchak.authservice.model.auth.resp.ErrorResp;
 import com.khomishchak.authservice.model.auth.resp.LoginResp;
-import com.khomishchak.authservice.model.auth.resp.ProcessedTokenResp;
 import com.khomishchak.authservice.model.auth.resp.RegistrationResp;
 import com.khomishchak.authservice.service.util.JwtUtil;
+import com.walletsphere.model.authentication.ProcessedJwtTokenResp;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -118,7 +118,7 @@ class AuthServiceImplTest {
         when(jwtUtil.extractUserId(eq(token))).thenReturn(USER_ID);
         when(jwtUtil.isTokenExpired(eq(token))).thenReturn(true);
         // when
-        ProcessedTokenResp processedTokenResp = authService.validateToken(tokenHeader);
+        ProcessedJwtTokenResp processedTokenResp = authService.validateToken(tokenHeader);
 
         // then
         assertEquals(true, processedTokenResp.validated());
