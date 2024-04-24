@@ -1,0 +1,32 @@
+spring:
+  datasource:
+    url: "jdbc:postgresql://localhost:5432/crypto"
+    username: "postgres"
+    password: "1111"
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: "org.hibernate.dialect.PostgreSQLDialect"
+        format_sql: false
+        globally_quoted_identifiers: true
+ws:
+  balance:
+    service:
+      type: "local"
+  account:
+    balance:
+      operations:
+        history:
+          service:
+            type: "remote"
+  integration:
+    exchanger:
+      white-bit:
+        base-url: "https://whitebit.com"
+        get-main-balance-url: "/api/v4/main-account/balance"
+        get-deposit-withdraw-history: "/api/v4/main-account/history"
+server:
+  port: 8085
