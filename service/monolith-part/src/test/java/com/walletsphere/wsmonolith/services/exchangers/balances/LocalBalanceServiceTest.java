@@ -5,6 +5,7 @@ import com.walletsphere.wsmonolith.model.exchanger.Balance;
 import com.walletsphere.wsmonolith.repositories.BalanceRepository;
 import com.walletsphere.wsmonolith.services.UserService;
 import com.walletsphere.wsmonolith.services.exchangers.ExchangerConnectorServiceFactory;
+import com.walletsphere.wsmonolith.services.exchangers.apikeys.ApiKeySettingService;
 import com.walletsphere.wsmonolith.services.exchangers.balances.cache.BalanceCacheHandler;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,12 +32,15 @@ class LocalBalanceServiceTest {
     @Mock
     private BalanceCacheHandler balanceCacheHandler;
 
+    @Mock
+    private ApiKeySettingService apiKeySettingService;
+
     private LocalBalanceService localBalanceService;
 
     @BeforeEach
     void setUp() {
         localBalanceService = new LocalBalanceService(balanceRepository, userService, List.of(exchangerServiceFactory),
-                balanceCacheHandler);
+                balanceCacheHandler, apiKeySettingService);
     }
 
     @Test

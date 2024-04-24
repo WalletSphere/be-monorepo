@@ -1,8 +1,11 @@
 package com.walletsphere.wsmonolith.services.exchangers.apikeys;
 
+import com.walletsphere.wsmonolith.model.User;
 import com.walletsphere.wsmonolith.model.enums.ExchangerCode;
+import com.walletsphere.wsmonolith.model.exchanger.ApiKeySetting;
 import com.walletsphere.wsmonolith.model.exchanger.ApiKeysPair;
 import com.walletsphere.wsmonolith.model.exchanger.DecryptedApiKeySettingDTO;
+import com.walletsphere.wsmonolith.model.requests.RegisterApiKeysReq;
 import com.walletsphere.wsmonolith.repositories.ApiKeySettingRepository;
 import com.walletsphere.wsmonolith.services.security.encryption.AesEncryptionService;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,26 @@ public class ApiKeySettingServiceImpl implements ApiKeySettingService {
                     ApiKeysPair encryptedKeysPair = settings.getApiKeys();
                     return buildDecryptedApiKeySettingDTO(encryptedKeysPair, settings.getCode());
                 }).toList();
+    }
+
+    @Override
+    public ApiKeySetting saveApiKeysSettings(User user, RegisterApiKeysReq apiKeysPair) {
+        ApiKeySetting apiKeySetting = ApiKeySetting.builder()
+                .user(user)
+                .code(apiKeysPair.code())
+                .apiKeys(buildEncryptedApiKeysPair(apiKeysPair))
+                .build();
+
+        user.getApiKeysSettings().add(apiKeySetting);
+
+        return apiKeySettingRepository.save(apiKeySetting);
+    }
+
+    private ApiKeysPair buildEncryptedApiKeysPair(RegisterApiKeysReq apiKeysPair) {
+        return ApiKeysPair.builder()
+                .publicApi(aesEncryptionService.encrypt(apiKeysPair.publicKey()))
+                .privateKey(aesEncryptionService.encrypt(apiKeysPair.secretKey()))
+                .build();
     }
 
     private DecryptedApiKeySettingDTO buildDecryptedApiKeySettingDTO(ApiKeysPair encryptedKeysPair, ExchangerCode code) {

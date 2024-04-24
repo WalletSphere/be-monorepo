@@ -1,4 +1,6 @@
 package com.walletsphere.wsmonolith.model.requests;
 
-public record RegisterApiKeysReq(String publicKey, String secretKey) {
+import com.walletsphere.wsmonolith.model.enums.ExchangerCode;
+
+public record RegisterApiKeysReq(String publicKey, String secretKey, ExchangerCode code) {
 }

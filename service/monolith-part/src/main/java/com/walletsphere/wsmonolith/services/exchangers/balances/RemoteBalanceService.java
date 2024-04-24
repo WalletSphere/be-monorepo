@@ -6,6 +6,7 @@ import com.walletsphere.wsmonolith.repositories.BalanceRepository;
 import com.walletsphere.wsmonolith.services.UserService;
 import com.walletsphere.wsmonolith.services.exchangers.ExchangerConnectorService;
 import com.walletsphere.wsmonolith.services.exchangers.ExchangerConnectorServiceFactory;
+import com.walletsphere.wsmonolith.services.exchangers.apikeys.ApiKeySettingService;
 import com.walletsphere.wsmonolith.services.exchangers.balances.cache.BalanceCacheHandler;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -18,8 +19,9 @@ public class RemoteBalanceService extends CommonBalanceService {
 
     public RemoteBalanceService(BalanceRepository balanceRepository,
                                 List<ExchangerConnectorServiceFactory> exchangerServiceFactories,
-                                UserService userService, BalanceCacheHandler balanceCacheHandler) {
-        super(balanceRepository, userService, exchangerServiceFactories, balanceCacheHandler);
+                                UserService userService, BalanceCacheHandler balanceCacheHandler,
+                                ApiKeySettingService apiKeySettingService) {
+        super(balanceRepository, userService, exchangerServiceFactories, balanceCacheHandler, apiKeySettingService);
     }
 
     @Override

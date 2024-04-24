@@ -3,17 +3,13 @@ package com.walletsphere.wsmonolith.services.exchangers;
 import com.walletsphere.wsmonolith.model.User;
 import com.walletsphere.wsmonolith.model.enums.ExchangerCode;
 import com.walletsphere.wsmonolith.model.enums.RegistrationStatus;
-import com.walletsphere.wsmonolith.model.exchanger.ApiKeySetting;
 import com.walletsphere.wsmonolith.model.exchanger.Balance;
 import com.walletsphere.wsmonolith.model.exchanger.transaction.ExchangerDepositWithdrawalTransactions;
 import com.walletsphere.wsmonolith.model.requests.RegisterApiKeysReq;
 import com.walletsphere.wsmonolith.model.requests.RegisterExchangerInfoReq;
 import com.walletsphere.wsmonolith.model.response.FirstlyGeneratedBalanceResp;
-import com.walletsphere.wsmonolith.repositories.ApiKeySettingRepository;
-import com.walletsphere.wsmonolith.services.UserService;
 import com.walletsphere.wsmonolith.services.exchangers.balances.BalanceService;
 import com.walletsphere.wsmonolith.services.exchangers.balances.history.AccountBalanceTransferOperationsHistoryService;
-import com.walletsphere.wsmonolith.services.security.encryption.AesEncryptionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,12 +31,6 @@ class ExchangerServiceImplTest {
     private static final ExchangerCode CODE = ExchangerCode.WHITE_BIT;
 
     @Mock
-    private UserService userService;
-    @Mock
-    private ApiKeySettingRepository apiKeySettingRepository;
-    @Mock
-    private AesEncryptionService aesEncryptionService;
-    @Mock
     private BalanceService balanceService;
     @Mock
     private AccountBalanceTransferOperationsHistoryService accountBalanceTransferOperationsHistoryService;
@@ -52,8 +42,7 @@ class ExchangerServiceImplTest {
     @BeforeEach
     void setUp() {
         testUser = new User();
-        exchangerService = new ExchangerServiceImpl(userService, apiKeySettingRepository, aesEncryptionService,
-                balanceService, accountBalanceTransferOperationsHistoryService);
+        exchangerService = new ExchangerServiceImpl(balanceService, accountBalanceTransferOperationsHistoryService);
     }
 
     @Test
@@ -72,14 +61,11 @@ class ExchangerServiceImplTest {
                 .user(testUser)
                 .build();
 
-        RegisterApiKeysReq apiKeysReq = new RegisterApiKeysReq(publicKey, secretKey);
+        RegisterApiKeysReq apiKeysReq = new RegisterApiKeysReq(publicKey, secretKey, CODE);
 
-        RegisterExchangerInfoReq infoReq = new RegisterExchangerInfoReq(apiKeysReq, CODE, balanceName);
+        RegisterExchangerInfoReq infoReq = new RegisterExchangerInfoReq(apiKeysReq, balanceName);
 
-        when(userService.getUserById(eq(USER_ID))).thenReturn(testUser);
-        when(aesEncryptionService.encrypt(anyString())).thenReturn("encryptedData");
-        when(apiKeySettingRepository.save(any(ApiKeySetting.class))).thenReturn(new ApiKeySetting());
-        when(balanceService.registerBalanceEntryInfo(eq(CODE), eq(balanceName), eq(testUser))).thenReturn(emptyBalance);
+        when(balanceService.registerBalanceEntryInfo(eq(infoReq), eq(USER_ID))).thenReturn(emptyBalance);
 
         // when
         FirstlyGeneratedBalanceResp result = exchangerService.addGeneralExchangerInfo(infoReq, USER_ID);
