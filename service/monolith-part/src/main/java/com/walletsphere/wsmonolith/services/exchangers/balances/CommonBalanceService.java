@@ -57,7 +57,7 @@ public abstract class CommonBalanceService implements BalanceService {
                 .user(user)
                 .build();
 
-        apiKeySettingService.saveApiKeysSettings(user, exchangerInfoReq.apiKeysReq());
+        apiKeySettingService.saveApiKeysSettings(user, emptyBalance, exchangerInfoReq.apiKeysReq());
         return balanceRepository.save(emptyBalance);
     }
 

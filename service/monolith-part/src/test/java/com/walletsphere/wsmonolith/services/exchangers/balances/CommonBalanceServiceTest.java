@@ -69,23 +69,20 @@ class CommonBalanceServiceTest {
         // given
         ExchangerCode code = ExchangerCode.WHITE_BIT;
 
-        Balance expectedBalance = Balance.builder()
-                        .code(code)
-                        .balanceName(BALANCE_NAME)
-                        .user(testUser)
-                        .build();
+        Balance balance = Balance.builder().code(code).balanceName(BALANCE_NAME).user(testUser).build();
+        Balance expectedBalance = Balance.builder().id(BALANCE_ID).code(code).balanceName(BALANCE_NAME).user(testUser).build();
 
         RegisterApiKeysReq apiKeysReq = new RegisterApiKeysReq("pubKey", "secKey", code);
         RegisterExchangerInfoReq infoReq = new RegisterExchangerInfoReq(apiKeysReq, BALANCE_NAME);
 
-        when(balanceRepository.save(eq(expectedBalance))).thenReturn(expectedBalance.toBuilder().id(BALANCE_ID).build());
+        when(balanceRepository.save(eq(balance))).thenReturn(expectedBalance);
         when(userService.getUserById(eq(USER_ID))).thenReturn(testUser);
 
         // when
         Balance result = commonBalanceService.registerBalanceEntryInfo(infoReq, USER_ID);
 
         // then
-        verify(apiKeySettingService).saveApiKeysSettings(eq(testUser), eq(apiKeysReq));
+        verify(apiKeySettingService).saveApiKeysSettings(eq(testUser), eq(balance), eq(apiKeysReq));
 
         assertThat(result).isNotNull();
         assertThat(result.getBalanceName()).isEqualTo(BALANCE_NAME);

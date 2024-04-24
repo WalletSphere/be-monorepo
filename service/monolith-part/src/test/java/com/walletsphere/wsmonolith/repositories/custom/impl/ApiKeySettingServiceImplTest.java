@@ -4,6 +4,7 @@ import static com.walletsphere.wsmonolith.model.enums.ExchangerCode.WHITE_BIT;
 import com.walletsphere.wsmonolith.model.User;
 import com.walletsphere.wsmonolith.model.exchanger.ApiKeySetting;
 import com.walletsphere.wsmonolith.model.exchanger.ApiKeysPair;
+import com.walletsphere.wsmonolith.model.exchanger.Balance;
 import com.walletsphere.wsmonolith.model.exchanger.DecryptedApiKeySettingDTO;
 import com.walletsphere.wsmonolith.model.requests.RegisterApiKeysReq;
 import com.walletsphere.wsmonolith.repositories.ApiKeySettingRepository;
@@ -27,6 +28,7 @@ import java.util.List;
 class ApiKeySettingServiceImplTest {
 
     private static final long USER_ID = 1L;
+    private static final long BALANCE_ID = 2L;
     private static final String ENCRYPTED_PUB_KEY = "encryptedPubKey";
     private static final String DECRYPTED_PUB_KEY = "decryptedPubKey";
     private static final String ENCRYPTED_PRI_KEY = "encryptedPriKey";
@@ -40,12 +42,12 @@ class ApiKeySettingServiceImplTest {
     private ApiKeySettingService apiKeySettingService;
 
     private User testUser;
+    private Balance testBalance;
 
     @BeforeEach
     void setUp() {
-        testUser = User.builder()
-                .id(USER_ID)
-                .build();
+        testUser = User.builder().id(USER_ID).build();
+        testBalance = Balance.builder().id(BALANCE_ID).build();
         apiKeySettingService = new ApiKeySettingServiceImpl(apiKeySettingRepository, aesEncryptionService);
     }
 
@@ -83,12 +85,13 @@ class ApiKeySettingServiceImplTest {
         ApiKeySetting encryptedApiKeySetting = ApiKeySetting.builder()
                 .user(testUser)
                 .code(WHITE_BIT)
+                .balance(testBalance)
                 .apiKeys(encryptedApiKeysPair)
                 .build();
 
         RegisterApiKeysReq registerApiKeysReq = new RegisterApiKeysReq(DECRYPTED_PUB_KEY, DECRYPTED_PRI_KEY, WHITE_BIT);
 
-        ApiKeySetting expected = new ApiKeySetting(1L, testUser, null, WHITE_BIT, encryptedApiKeysPair);
+        ApiKeySetting expected = new ApiKeySetting(1L, testUser, testBalance, WHITE_BIT, encryptedApiKeysPair);
 
         when(apiKeySettingRepository.save(eq(encryptedApiKeySetting))).thenReturn(expected);
         when(aesEncryptionService.encrypt(eq(DECRYPTED_PUB_KEY))).thenReturn(ENCRYPTED_PUB_KEY);
@@ -96,7 +99,7 @@ class ApiKeySettingServiceImplTest {
 
 
         // when
-        ApiKeySetting result = apiKeySettingService.saveApiKeysSettings(testUser, registerApiKeysReq);
+        ApiKeySetting result = apiKeySettingService.saveApiKeysSettings(testUser, testBalance, registerApiKeysReq);
 
         // then
 
@@ -104,5 +107,6 @@ class ApiKeySettingServiceImplTest {
         assertThat(result.getApiKeys()).isEqualTo(encryptedApiKeysPair);
         assertThat(result.getCode()).isEqualTo(WHITE_BIT);
         assertThat(result.getUser()).isEqualTo(testUser);
+        assertThat(result.getBalance().getId()).isEqualTo(BALANCE_ID);
     }
 }
