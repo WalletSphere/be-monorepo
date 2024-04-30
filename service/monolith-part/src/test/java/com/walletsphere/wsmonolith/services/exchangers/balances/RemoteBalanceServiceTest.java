@@ -8,6 +8,7 @@ import com.walletsphere.wsmonolith.repositories.BalanceRepository;
 import com.walletsphere.wsmonolith.services.UserService;
 import com.walletsphere.wsmonolith.services.exchangers.ExchangerConnectorService;
 import com.walletsphere.wsmonolith.services.exchangers.ExchangerConnectorServiceFactory;
+import com.walletsphere.wsmonolith.services.exchangers.apikeys.ApiKeySettingService;
 import com.walletsphere.wsmonolith.services.exchangers.balances.cache.BalanceCacheHandler;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +38,8 @@ class RemoteBalanceServiceTest {
     private ExchangerConnectorService exchangerConnectorService;
     @Mock
     private BalanceCacheHandler balanceCacheHandler;
+    @Mock
+    private ApiKeySettingService apiKeySettingService;
 
     private RemoteBalanceService remoteBalanceService;
 
@@ -47,7 +50,7 @@ class RemoteBalanceServiceTest {
         when(exchangerServiceFactory.getExchangerCode()).thenReturn(ExchangerCode.WHITE_BIT);
         testUser = User.builder().id(USER_ID).build();
         remoteBalanceService = new RemoteBalanceService(balanceRepository, List.of(exchangerServiceFactory),
-                userService , balanceCacheHandler);
+                userService , balanceCacheHandler, apiKeySettingService);
     }
 
     @Test

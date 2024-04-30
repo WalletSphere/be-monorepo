@@ -5,6 +5,7 @@ import com.walletsphere.wsmonolith.model.exchanger.Balance;
 import com.walletsphere.wsmonolith.repositories.BalanceRepository;
 import com.walletsphere.wsmonolith.services.UserService;
 import com.walletsphere.wsmonolith.services.exchangers.ExchangerConnectorServiceFactory;
+import com.walletsphere.wsmonolith.services.exchangers.apikeys.ApiKeySettingService;
 import com.walletsphere.wsmonolith.services.exchangers.balances.cache.BalanceCacheHandler;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.annotation.Cacheable;
@@ -20,8 +21,8 @@ public class LocalBalanceService extends CommonBalanceService {
 
     public LocalBalanceService(BalanceRepository balanceRepository, UserService userService,
                                List<ExchangerConnectorServiceFactory> exchangerServiceFactories,
-                               BalanceCacheHandler balanceCacheHandler) {
-        super(balanceRepository, userService, exchangerServiceFactories, balanceCacheHandler);
+                               BalanceCacheHandler balanceCacheHandler, ApiKeySettingService apiKeySettingService) {
+        super(balanceRepository, userService, exchangerServiceFactories, balanceCacheHandler, apiKeySettingService);
         this.balanceRepository = balanceRepository;
     }
 

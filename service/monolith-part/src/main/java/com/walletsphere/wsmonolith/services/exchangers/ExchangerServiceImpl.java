@@ -1,25 +1,17 @@
 package com.walletsphere.wsmonolith.services.exchangers;
 
-import com.walletsphere.wsmonolith.model.User;
 import com.walletsphere.wsmonolith.model.enums.ExchangerCode;
 import com.walletsphere.wsmonolith.model.enums.RegistrationStatus;
-import com.walletsphere.wsmonolith.model.exchanger.ApiKeySetting;
-import com.walletsphere.wsmonolith.model.exchanger.ApiKeysPair;
 import com.walletsphere.wsmonolith.model.exchanger.Balance;
 import com.walletsphere.wsmonolith.model.exchanger.ExchangerUniqueCurrenciesDTO;
 import com.walletsphere.wsmonolith.model.exchanger.transaction.ExchangerDepositWithdrawalTransactions;
 import com.walletsphere.wsmonolith.model.exchanger.transaction.Transaction;
-import com.walletsphere.wsmonolith.model.requests.RegisterApiKeysReq;
 import com.walletsphere.wsmonolith.model.requests.RegisterExchangerInfoReq;
 import com.walletsphere.wsmonolith.model.response.FirstlyGeneratedBalanceResp;
-import com.walletsphere.wsmonolith.repositories.ApiKeySettingRepository;
-import com.walletsphere.wsmonolith.services.UserService;
 import com.walletsphere.wsmonolith.services.exchangers.balances.BalanceService;
 import com.walletsphere.wsmonolith.services.exchangers.balances.history.AccountBalanceTransferOperationsHistoryService;
 import com.walletsphere.wsmonolith.model.filter.TransactionFilter;
 import com.walletsphere.wsmonolith.model.filter.TransactionSearchCriteria;
-import com.walletsphere.wsmonolith.services.security.encryption.AesEncryptionService;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -27,34 +19,18 @@ import java.util.List;
 
 @Service
 public class ExchangerServiceImpl implements ExchangerService {
-
-    private final UserService userService;
-    private final ApiKeySettingRepository apiKeySettingRepository;
-    private final AesEncryptionService aesEncryptionService;
     private final BalanceService balanceService;
     private final AccountBalanceTransferOperationsHistoryService accountBalanceTransferOperationsHistoryService;
 
-    public ExchangerServiceImpl(UserService userService, ApiKeySettingRepository apiKeySettingRepository,
-                                AesEncryptionService aesEncryptionService, BalanceService balanceService,
+    public ExchangerServiceImpl(BalanceService balanceService,
                                 AccountBalanceTransferOperationsHistoryService accountBalanceTransferOperationsHistoryService) {
-        this.userService = userService;
-        this.apiKeySettingRepository = apiKeySettingRepository;
-        this.aesEncryptionService = aesEncryptionService;
         this.balanceService = balanceService;
         this.accountBalanceTransferOperationsHistoryService = accountBalanceTransferOperationsHistoryService;
     }
 
     @Override
-    @Transactional
     public FirstlyGeneratedBalanceResp addGeneralExchangerInfo(RegisterExchangerInfoReq exchangerInfoReq, long userId) {
-        User user = userService.getUserById(userId);
-        RegisterApiKeysReq apiKeys = exchangerInfoReq.apiKeysReq();
-        ExchangerCode code = exchangerInfoReq.code();
-
-        persistApiKeysSettings(user, apiKeys.secretKey(), apiKeys.publicKey(), code);
-
-        Balance emptyBalance = balanceService.registerBalanceEntryInfo(code, exchangerInfoReq.balanceName(), user);
-
+        Balance emptyBalance = balanceService.registerBalanceEntryInfo(exchangerInfoReq, userId);
         return new FirstlyGeneratedBalanceResp(emptyBalance.getId(), userId, RegistrationStatus.SUCCESSFUL);
     }
 
@@ -106,23 +82,5 @@ public class ExchangerServiceImpl implements ExchangerService {
     @Override
     public List<ExchangerUniqueCurrenciesDTO> getUsedCurrencies() {
         return balanceService.getUsedCurrencies();
-    }
-
-    private void persistApiKeysSettings(User user, String privateKey, String publicApi, ExchangerCode code) {
-        ApiKeysPair apiKeysPair = ApiKeysPair.builder()
-                .publicApi(aesEncryptionService.encrypt(publicApi))
-                .privateKey(aesEncryptionService.encrypt(privateKey))
-                .build();
-
-        ApiKeySetting apiKeySetting = ApiKeySetting.
-                builder()
-                .user(user)
-                .code(code)
-                .apiKeys(apiKeysPair)
-                .build();
-
-        user.getApiKeysSettings().add(apiKeySetting);
-
-        apiKeySettingRepository.save(apiKeySetting);
     }
 }

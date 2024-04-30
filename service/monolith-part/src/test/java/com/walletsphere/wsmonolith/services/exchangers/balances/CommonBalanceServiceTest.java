@@ -4,10 +4,13 @@ import com.walletsphere.wsmonolith.model.User;
 import com.walletsphere.wsmonolith.model.enums.ExchangerCode;
 import com.walletsphere.wsmonolith.model.exchanger.ApiKeySetting;
 import com.walletsphere.wsmonolith.model.exchanger.Balance;
+import com.walletsphere.wsmonolith.model.requests.RegisterApiKeysReq;
+import com.walletsphere.wsmonolith.model.requests.RegisterExchangerInfoReq;
 import com.walletsphere.wsmonolith.repositories.BalanceRepository;
 import com.walletsphere.wsmonolith.services.UserService;
 import com.walletsphere.wsmonolith.services.exchangers.ExchangerConnectorService;
 import com.walletsphere.wsmonolith.services.exchangers.ExchangerConnectorServiceFactory;
+import com.walletsphere.wsmonolith.services.exchangers.apikeys.ApiKeySettingService;
 import com.walletsphere.wsmonolith.services.exchangers.balances.cache.BalanceCacheHandler;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +47,8 @@ class CommonBalanceServiceTest {
     private ExchangerConnectorService exchangerConnectorService;
     @Mock
     private BalanceCacheHandler balanceCacheHandler;
+    @Mock
+    private ApiKeySettingService apiKeySettingService;
 
     private CommonBalanceService commonBalanceService;
 
@@ -54,7 +59,8 @@ class CommonBalanceServiceTest {
         when(exchangerServiceFactory.getExchangerCode()).thenReturn(ExchangerCode.WHITE_BIT);
         testUser = User.builder().id(USER_ID).build();
         commonBalanceService = mock(CommonBalanceService.class, withSettings()
-                .useConstructor(balanceRepository, userService, List.of(exchangerServiceFactory), balanceCacheHandler)
+                .useConstructor(balanceRepository, userService, List.of(exchangerServiceFactory), balanceCacheHandler,
+                        apiKeySettingService)
                 .defaultAnswer(CALLS_REAL_METHODS));
     }
 
@@ -63,19 +69,21 @@ class CommonBalanceServiceTest {
         // given
         ExchangerCode code = ExchangerCode.WHITE_BIT;
 
-        Balance expectedBalance = Balance.builder()
-                        .code(code)
-                        .balanceName(BALANCE_NAME)
-                        .user(testUser)
-                        .build();
+        Balance balance = Balance.builder().code(code).balanceName(BALANCE_NAME).user(testUser).build();
+        Balance expectedBalance = Balance.builder().id(BALANCE_ID).code(code).balanceName(BALANCE_NAME).user(testUser).build();
 
-        when(balanceRepository.save(eq(expectedBalance))).thenReturn(expectedBalance.toBuilder().id(BALANCE_ID).build());
+        RegisterApiKeysReq apiKeysReq = new RegisterApiKeysReq("pubKey", "secKey", code);
+        RegisterExchangerInfoReq infoReq = new RegisterExchangerInfoReq(apiKeysReq, BALANCE_NAME);
 
+        when(balanceRepository.save(eq(balance))).thenReturn(expectedBalance);
+        when(userService.getUserById(eq(USER_ID))).thenReturn(testUser);
 
         // when
-        Balance result = commonBalanceService.registerBalanceEntryInfo(code, BALANCE_NAME, testUser);
+        Balance result = commonBalanceService.registerBalanceEntryInfo(infoReq, USER_ID);
 
         // then
+        verify(apiKeySettingService).saveApiKeysSettings(eq(testUser), eq(balance), eq(apiKeysReq));
+
         assertThat(result).isNotNull();
         assertThat(result.getBalanceName()).isEqualTo(BALANCE_NAME);
         assertThat(result.getUserId()).isEqualTo(USER_ID);

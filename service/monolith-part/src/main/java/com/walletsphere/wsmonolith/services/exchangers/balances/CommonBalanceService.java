@@ -6,10 +6,12 @@ import com.walletsphere.wsmonolith.model.enums.ExchangerCode;
 import com.walletsphere.wsmonolith.model.exchanger.ApiKeySetting;
 import com.walletsphere.wsmonolith.model.exchanger.Balance;
 import com.walletsphere.wsmonolith.model.exchanger.ExchangerUniqueCurrenciesDTO;
+import com.walletsphere.wsmonolith.model.requests.RegisterExchangerInfoReq;
 import com.walletsphere.wsmonolith.repositories.BalanceRepository;
 import com.walletsphere.wsmonolith.services.UserService;
 import com.walletsphere.wsmonolith.services.exchangers.ExchangerConnectorService;
 import com.walletsphere.wsmonolith.services.exchangers.ExchangerConnectorServiceFactory;
+import com.walletsphere.wsmonolith.services.exchangers.apikeys.ApiKeySettingService;
 import com.walletsphere.wsmonolith.services.exchangers.balances.cache.BalanceCacheHandler;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -29,27 +31,33 @@ public abstract class CommonBalanceService implements BalanceService {
     private final UserService userService;
     private final Map<ExchangerCode, ExchangerConnectorServiceFactory> exchangerServiceFactories;
     private final BalanceCacheHandler balanceCacheHandler;
+   private final ApiKeySettingService apiKeySettingService;
 
 
     public CommonBalanceService(BalanceRepository balanceRepository, UserService userService,
                                 List<ExchangerConnectorServiceFactory> exchangerServiceFactories,
-                                BalanceCacheHandler balanceCacheHandler) {
+                                BalanceCacheHandler balanceCacheHandler, ApiKeySettingService apiKeySettingService) {
             this.balanceRepository = balanceRepository;
             this.userService = userService;
             this.exchangerServiceFactories = exchangerServiceFactories.stream()
                     .collect(Collectors.toMap(ExchangerConnectorServiceFactory::getExchangerCode, factory -> factory));
             this.balanceCacheHandler = balanceCacheHandler;
+            this.apiKeySettingService = apiKeySettingService;
         }
 
     // No need to put in cache, because it will be synchronised first, and it will be saved in cache at that stage
     @Override
-    public Balance registerBalanceEntryInfo(ExchangerCode code, String balanceName, User user) {
+    @Transactional
+    public Balance registerBalanceEntryInfo(RegisterExchangerInfoReq exchangerInfoReq, Long userId) {
+        User user = userService.getUserById(userId);
+
         Balance emptyBalance = Balance.builder()
-                .code(code)
-                .balanceName(balanceName)
+                .code(exchangerInfoReq.apiKeysReq().code())
+                .balanceName(exchangerInfoReq.balanceName())
                 .user(user)
                 .build();
 
+        apiKeySettingService.saveApiKeysSettings(user, emptyBalance, exchangerInfoReq.apiKeysReq());
         return balanceRepository.save(emptyBalance);
     }
 
